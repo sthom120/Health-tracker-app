@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Custom Tracker – Setup</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+</head>
+<body>
+  <h1>Personal Health Tracker</h1>
+<h2>Define the symptoms, triggers, or metrics you’d like to monitor</h2>
+
+  <form id="questionForm">
+  <label>
+    What do you want to track?
+    <input type="text" id="questionText" required>
+  </label>
+
+  <label>
+    Choose how you'll answer:
+    <select id="questionType" required>
+      <option value="boolean">Yes / No</option>
+      <option value="number">Number (e.g. 1–10)</option>
+      <option value="text">Short text</option>
+      <option value="date">Date</option>
+      <option value="select">Select (choose from options)</option>
+    </select>
+  </label>
+
+  <div id="optionsContainer" style="display:none;">
+    <label>
+      List your options (comma-separated):
+      <input type="text" id="questionOptions" placeholder="e.g. x, y, z">
+    </label>
+  </div>
+
+  <button type="submit">Add to Tracker</button>
+</form>
+
+
+  <h2>Current Questions</h2>
+  <ul id="questionList"></ul>
+<h2>Current Questions</h2>
+<ul id="questionList"></ul>
+
+<div style="margin-top:1em;">
+  <button id="deleteAllQuestions" class="danger">Clear All Tracked questions</button>
+  <button id="deleteAllData" class="danger">Clear All Recorded Entries</button>
+</div>
+
+<button id="goTrack">Start Logging</button>
+
+
+  <script src="main.js"></script>
+</body>
+</html>

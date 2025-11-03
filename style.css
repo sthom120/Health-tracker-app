@@ -1,0 +1,218 @@
+/* Global Reset & Font */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  background-color: #f5f8fa;
+  color: #2c3e50;
+  padding: 2rem 1rem;
+  line-height: 1.6;
+  max-width: 960px;
+  margin: auto;
+}
+
+/* Typography */
+h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin: 1.5rem 0 1rem;
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+/* Form Styling */
+form {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  gap: 0.4rem;
+}
+
+input, select, textarea {
+  padding: 0.65rem 0.85rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  transition: border-color 0.2s ease-in-out;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #2a9d8f;
+  outline: none;
+}
+
+/* Buttons */
+button {
+  background-color: #2a9d8f;
+  color: white;
+  font-weight: 600;
+  padding: 0.65rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #21867a;
+}
+
+button.secondary {
+  background-color: #95a5a6;
+}
+
+button.secondary:hover {
+  background-color: #7f8c8d;
+}
+
+button.danger {
+  background-color: #e76f51;
+}
+
+button.danger:hover {
+  background-color: #d35c3d;
+}
+
+button + button {
+  margin-left: 0.5rem;
+}
+
+/* List Styling */
+#questionList {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+#questionList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: #ffffff;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#questionList li button {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
+}
+
+/* Data Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  background-color: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+th, td {
+  padding: 0.9rem 1.2rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background-color: #f0f4f5;
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Charts */
+canvas {
+  max-width: 100%;
+  margin-top: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Option Picker */
+.option-picker label {
+  display: inline-block;
+  margin-right: 1rem;
+  margin-top: 0.25rem;
+}
+
+.option-picker input {
+  margin-right: 0.3em;
+}
+
+/* Utilities */
+#optionsContainer {
+  margin-top: 0.5rem;
+}
+
+#compareResults {
+  margin-top: 1rem;
+}
+
+#backHome {
+  margin-top: 2rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+  form {
+    padding: 1.5rem;
+  }
+
+  table, th, td {
+    font-size: 0.9rem;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  button + button {
+    margin-left: 0;
+  }
+
+  #questionList li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  #questionList li button {
+    align-self: flex-end;
+  }
+}
