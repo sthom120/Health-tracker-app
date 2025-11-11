@@ -163,7 +163,6 @@ if (quickTrackBtn) {
    2️⃣  TRACK PAGE – Record Daily Data
    ============================================================ */
 if (document.getElementById("dailyForm")) {
-
   // ---------- Load questions ----------
   const questions = JSON.parse(localStorage.getItem("questions") || "[]");
   const form = document.getElementById("dailyForm");
@@ -172,94 +171,98 @@ if (document.getElementById("dailyForm")) {
 
   // ---------- Dynamically build the form ----------
   questions.forEach(q => {
-    const label = document.createElement("label");
-    label.textContent = q.text + ": ";
-    let input;
+    // Card container
+    const card = document.createElement("div");
+    card.classList.add("entry-card");
 
+    // Label for the field
+    const fieldLabel = document.createElement("label");
+    fieldLabel.textContent = q.text + ": ";
+
+    let input;
     switch (q.type) {
-      case "boolean": // Yes/No dropdown
+      case "boolean": {
         input = document.createElement("select");
         input.innerHTML = "<option value='true'>Yes</option><option value='false'>No</option>";
         break;
-      case "number": // numeric field
+      }
+      case "number": {
         input = document.createElement("input");
         input.type = "number";
         input.min = 0;
         input.max = 10;
         break;
-      case "date": // date picker
+      }
+      case "date": {
         input = document.createElement("input");
         input.type = "date";
         break;
-      case "select": // user-defined options (now checkboxes)
-  input = document.createElement("div");
-  input.classList.add("multi-select-group");
-
-  q.options.forEach(opt => {
-    const label = document.createElement("label");
-    label.classList.add("checkbox-option");
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.name = q.id;
-    checkbox.value = opt;
-
-    label.appendChild(checkbox);
-    label.append(" " + opt);
-    input.appendChild(label);
-  });
-  break;
-      default: // plain text
+      }
+      case "select": {
+        input = document.createElement("div");
+        input.classList.add("multi-select-group");
+        (q.options || []).forEach(opt => {
+          const optLabel = document.createElement("label");
+          optLabel.classList.add("checkbox-option");
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.name = q.id;
+          checkbox.value = opt;
+          optLabel.appendChild(checkbox);
+          optLabel.append(" " + opt);
+          input.appendChild(optLabel);
+        });
+        break;
+      }
+      default: {
         input = document.createElement("input");
         input.type = "text";
+      }
     }
 
-    input.name = q.id;
-    label.appendChild(input);
-    form.appendChild(label);
-    form.appendChild(document.createElement("br"));
+    // set name for non-select controls (select uses checkbox group names)
+    if (q.type !== "select") input.name = q.id;
+
+    fieldLabel.appendChild(input);
+    card.appendChild(fieldLabel);
+    form.appendChild(card);
   });
 
   // ---------- Save entry ----------
   saveBtn.addEventListener("click", () => {
     const entries = JSON.parse(localStorage.getItem("entries") || "[]");
 
-    // NEW: manual date entry (default to today if left blank)
     const entryDate =
       document.getElementById("entryDate").value ||
       new Date().toISOString().split("T")[0];
 
     const data = { date: entryDate, responses: {} };
 
-    // Store all answers by question id
     questions.forEach(q => {
-  let val;
+      let val;
+      if (q.type === "boolean") {
+        val = form.elements[q.id].value === "true";
+      } else if (q.type === "select") {
+        const checked = Array.from(
+          form.querySelectorAll(`input[name="${q.id}"]:checked`)
+        ).map(cb => cb.value);
+        val = checked;
+      } else {
+        val = form.elements[q.id].value;
+      }
+      data.responses[q.id] = val;
+    });
 
-  if (q.type === "boolean") {
-    val = form.elements[q.id].value === "true";
-  } else if (q.type === "select") {
-    // collect all checked boxes
-    const checked = Array.from(form.querySelectorAll(`input[name="${q.id}"]:checked`))
-      .map(cb => cb.value);
-    val = checked; // array of selected options
-  } else {
-    val = form.elements[q.id].value;
-  }
+    localStorage.setItem("entries", JSON.stringify([...entries, data]));
+    form.reset();
 
-  data.responses[q.id] = val;
-});
-
-
-form.reset();
-const msg = document.getElementById("saveMessage");
-if (msg) {
-  msg.classList.remove("hidden");
-  setTimeout(() => msg.classList.add("hidden"), 2500);
-} else {
-  alert("Entry saved!"); // fallback if element not found
-}
-
-
+    const msg = document.getElementById("saveMessage");
+    if (msg) {
+      msg.classList.remove("hidden");
+      setTimeout(() => msg.classList.add("hidden"), 2500);
+    } else {
+      alert("Entry saved!");
+    }
   });
 
   // ---------- Navigate to data view ----------
@@ -267,8 +270,6 @@ if (msg) {
     window.location.href = "view.html";
   });
 }
-
-
 
 /* ============================================================
    3️⃣  VIEW PAGE – Display + Analyze Data

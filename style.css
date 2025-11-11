@@ -56,8 +56,6 @@ body {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   object-fit: contain;
   object-position: center;
-  max-width: 100%;
-  height: auto;
 }
 
 .header-text {
@@ -86,16 +84,13 @@ body {
   .logo-row {
     gap: 0.6rem;
   }
-
   .app-logo {
     width: 32px;
     height: 32px;
   }
-
   #appTitle {
     font-size: 1.25rem;
   }
-
   .tagline {
     font-size: 0.85rem;
   }
@@ -135,6 +130,7 @@ p {
   line-height: 1.5;
 }
 
+/* Greeting Block */
 #greetingText {
   text-align: center;
   font-size: 1.8rem;
@@ -154,6 +150,9 @@ p {
   opacity: 0.8;
 }
 
+/* ============================================================
+   INTRO SECTIONS
+   ============================================================ */
 .intro-block {
   text-align: center;
   margin-bottom: 1rem;
@@ -181,6 +180,47 @@ p {
   line-height: 1.6;
   font-size: 1rem;
   color: #2c3e50;
+}
+
+/* ============================================================
+   ENTRY CARDS (Track Page)
+   ============================================================ */
+.entry-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.entry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.entry-card label {
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.entry-card input,
+.entry-card select,
+.entry-card textarea {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+}
+
+.entry-card input:focus,
+.entry-card select:focus,
+.entry-card textarea:focus {
+  border-color: var(--teal);
+  outline: none;
 }
 
 /* ============================================================
@@ -242,7 +282,6 @@ button:hover {
 button.secondary {
   background-color: #95a5a6;
 }
-
 button.secondary:hover {
   background-color: #7f8c8d;
 }
@@ -250,7 +289,6 @@ button.secondary:hover {
 button.danger {
   background-color: #e76f51;
 }
-
 button.danger:hover {
   background-color: #d35c3d;
 }
@@ -269,7 +307,9 @@ button + button {
   font-weight: 600;
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
 /* ============================================================
    LISTS
@@ -355,7 +395,6 @@ canvas {
   margin-right: 1rem;
   margin-top: 0.25rem;
 }
-
 .option-picker input {
   margin-right: 0.3em;
 }
@@ -363,19 +402,10 @@ canvas {
 /* ============================================================
    UTILITIES
    ============================================================ */
-#optionsContainer {
-  margin-top: 0.5rem;
-}
+#optionsContainer { margin-top: 0.5rem; }
+#compareResults { margin-top: 1rem; }
+#backHome { margin-top: 2rem; }
 
-#compareResults {
-  margin-top: 1rem;
-}
-
-#backHome {
-  margin-top: 2rem;
-}
-
-/* Multi-select checkboxes */
 .multi-select-group {
   display: flex;
   flex-wrap: wrap;
@@ -391,7 +421,6 @@ canvas {
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   cursor: pointer;
 }
-
 .checkbox-option input {
   margin-right: 0.4rem;
 }
@@ -403,12 +432,10 @@ body.theme-morning {
   background: linear-gradient(180deg, #e8f5e9 0%, #ffffff 100%);
   color: #2e7d32;
 }
-
 body.theme-afternoon {
   background: linear-gradient(180deg, #fffde7 0%, #ffffff 100%);
   color: #6d4c41;
 }
-
 body.theme-evening {
   background: linear-gradient(180deg, #eceff1 0%, #ffffff 100%);
   color: #37474f;
@@ -445,16 +472,13 @@ body.theme-evening {
   font-weight: 700;
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
 }
-
 .bottom-nav button:not(.active) {
   background-color: #f8f9fa;
   color: #555;
 }
-
 .bottom-nav button:hover {
   background-color: #e0f2f1;
 }
-
 
 /* ============================================================
    MOBILE RESPONSIVE DESIGN
@@ -463,7 +487,12 @@ body.theme-evening {
   body {
     padding: 1rem;
     font-size: 0.95rem;
-    padding-bottom: 4rem; /* extra room for on-screen keyboard */
+    padding-bottom: 4rem;
+  }
+
+  .entry-card {
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.8rem;
   }
 
   label {
