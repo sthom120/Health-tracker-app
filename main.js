@@ -262,26 +262,54 @@ if (document.getElementById("dataTable")) {
   }
 
   // ---------- Build table ----------
-  function renderTable() {
-    table.innerHTML = "";
-    const header = document.createElement("tr");
-    header.innerHTML =
-      "<th>Date</th>" + questions.map(q => `<th>${q.text}</th>`).join("");
-    table.appendChild(header);
+function renderTable() {
+  table.innerHTML = "";
+  const header = document.createElement("tr");
+  header.innerHTML =
+    "<th>Date</th>" +
+    questions.map(q => `<th>${q.text}</th>`).join("") +
+    "<th>Actions</th>"; // new column for delete
+  table.appendChild(header);
 
-    getFilteredEntries().forEach(e => {
-      const row = document.createElement("tr");
-      let html = `<td>${e.date}</td>`;
-      questions.forEach(q => {
-       const val = e.responses[q.id];
-html += `<td>${Array.isArray(val) ? val.join(", ") : (val ?? "")}</td>`;
+  const allEntries = getFilteredEntries();
 
-
-      });
-      row.innerHTML = html;
-      table.appendChild(row);
+  allEntries.forEach((e, index) => {
+    const row = document.createElement("tr");
+    let html = `<td>${e.date}</td>`;
+    questions.forEach(q => {
+      const val = e.responses[q.id];
+      html += `<td>${Array.isArray(val) ? val.join(", ") : (val ?? "")}</td>`;
     });
-  }
+
+    // add delete button column
+    html += `<td><button class="danger small-delete" data-index="${index}">Delete</button></td>`;
+    row.innerHTML = html;
+    table.appendChild(row);
+  });
+
+  // attach delete button functionality
+  table.querySelectorAll(".small-delete").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const index = btn.dataset.index;
+      if (confirm("Delete this entry?")) {
+        const entries = JSON.parse(localStorage.getItem("entries") || "[]");
+        const filtered = getFilteredEntries();
+        const entryToDelete = filtered[index];
+
+        // remove entry by matching date + responses
+        const updated = entries.filter(e =>
+          !(e.date === entryToDelete.date &&
+            JSON.stringify(e.responses) === JSON.stringify(entryToDelete.responses))
+        );
+
+        localStorage.setItem("entries", JSON.stringify(updated));
+        renderTable();
+        alert("Entry deleted!");
+      }
+    });
+  });
+}
+
   renderTable(); // initial display
 
 
