@@ -23,6 +23,77 @@ body {
 
 }
 
+.tagline {
+  text-align: center;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.6);
+  margin-bottom: 1rem;
+}
+/* ============================================================
+   HEADER & LOGO
+   ============================================================ */
+#appHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.app-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+#appTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2a9d8f;
+  margin: 0;
+}
+
+.tagline {
+  font-size: 0.95rem;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0.1rem 0 0 0;
+}
+
+/* Adjust for mobile screens */
+@media (max-width: 600px) {
+  .logo-row {
+    flex-direction: row;
+    gap: 0.6rem;
+  }
+
+  .app-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  #appTitle {
+    font-size: 1.25rem;
+  }
+
+  .tagline {
+    font-size: 0.85rem;
+  }
+}
+
 /* ============================================================
    TYPOGRAPHY
    ============================================================ */
@@ -56,6 +127,47 @@ p {
   margin-bottom: 1.2rem;
   line-height: 1.5;
 }
+
+header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+#greetingText {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2a9d8f;
+  margin-bottom: 0.5rem;
+}
+
+.intro-block {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.intro-block .primary {
+  background-color: #2a9d8f;
+  color: #fff;
+  font-size: 1rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.intro-section {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.intro-section p {
+  line-height: 1.6;
+  font-size: 1rem;
+  color: #2c3e50;
+}
+
 
 /* ============================================================
    FORMS
@@ -269,6 +381,65 @@ canvas {
   margin-right: 0.4rem;
 }
 
+/* ============================================================
+   THEMES
+   ============================================================ */
+
+body.theme-morning {
+  background: linear-gradient(180deg, #e8f5e9 0%, #ffffff 100%);
+  color: #2e7d32;
+}
+
+body.theme-afternoon {
+  background: linear-gradient(180deg, #fffde7 0%, #ffffff 100%);
+  color: #6d4c41;
+}
+
+body.theme-evening {
+  background: linear-gradient(180deg, #eceff1 0%, #ffffff 100%);
+  color: #37474f;
+}
+
+/* Greeting block styling */
+#greetingText {
+  text-align: center;
+  margin: 1rem 0 1.5rem;
+}
+
+#greetingText h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+#greetingSub {
+  font-size: 1rem;
+  color: inherit;
+  opacity: 0.8;
+}
+
+button, .intro-section, .entry-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover, .entry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+:root {
+  --teal: #2a9d8f;
+  --cream: #fdf6ec;
+  --sage: #b8d8ba;
+  --sand: #e9c46a;
+  --rose: #f4a261;
+}
+
+button {
+  background-color: var(--teal);
+}
+button:hover {
+  background-color: var(--rose);
+}
 
 /* ============================================================
    MOBILE RESPONSIVE DESIGN

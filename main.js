@@ -23,8 +23,42 @@ if (document.getElementById("questionForm")) {
   const deleteAllQuestions = document.getElementById("deleteAllQuestions");
   const deleteAllData = document.getElementById("deleteAllData");
 
+
+  // Personalized greeting + tone
+const greetingText = document.getElementById("greetingText");
+const hour = new Date().getHours();
+
+let greeting = "";
+let subtext = "";
+let themeClass = "";
+
+if (hour < 12) {
+  greeting = "Good morning";
+  subtext = "Let's set the tone for a good day.";
+  themeClass = "theme-morning";
+} else if (hour < 18) {
+  greeting = "Good afternoon";
+  subtext = "A great time to check in with yourself.";
+  themeClass = "theme-afternoon";
+} else {
+  greeting = "Good evening";
+  subtext = "Reflect and unwind — how was today?";
+  themeClass = "theme-evening";
+}
+
+if (greetingText) {
+  greetingText.innerHTML = `
+    <h1>${greeting}</h1>
+    <p id="greetingSub">${subtext}</p>
+  `;
+  document.body.classList.add(themeClass);
+}
+
+
+
   // ---------- Load existing questions ----------
   let questions = JSON.parse(localStorage.getItem("questions") || "[]");
+
 
   // ---------- Render question list ----------
   function renderList() {
@@ -117,6 +151,12 @@ if (document.getElementById("questionForm")) {
   });
 }
 
+const quickTrackBtn = document.getElementById("quickTrackBtn");
+if (quickTrackBtn) {
+  quickTrackBtn.addEventListener("click", () => {
+    window.location.href = "track.html";
+  });
+}
 
 
 /* ============================================================
