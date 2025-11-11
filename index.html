@@ -5,6 +5,14 @@
   <title>Custom Tracker – Setup</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log("Service worker registered"))
+      .catch(err => console.error("Service worker failed:", err));
+  }
+</script>
 
 </head>
 <body>
