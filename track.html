@@ -9,6 +9,9 @@
 </head>
 <body>
   <h1>Daily Tracker</h1>
+<p class="intro-text">
+  Record today’s data (or select another date). Check off or enter the values that apply.
+</p>
 
 <label>
   Date:
@@ -19,7 +22,16 @@
 
   <button id="saveEntry">Save Entry</button>
   <button id="goView">View Data</button>
+<div id="saveMessage" class="hidden">✅ Entry saved!</div>
+<button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
+<nav class="bottom-nav">
+  <button onclick="window.location.href='index.html'">Setup</button>
+  <button onclick="window.location.href='track.html'">Track</button>
+  <button onclick="window.location.href='view.html'">View</button>
+</nav>
 
   <script src="main.js"></script>
+  
+
 </body>
 </html>

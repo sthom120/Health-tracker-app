@@ -23,7 +23,7 @@
 
   <form id="questionForm">
   <label>
-    What do you want to track?
+    What do you want to track? Each item you add will appear in your daily log form.
     <input type="text" id="questionText" required>
   </label>
 
@@ -60,6 +60,11 @@
 </div>
 
 <button id="goTrack">Start Logging</button>
+<nav class="bottom-nav">
+  <button onclick="window.location.href='index.html'">Setup</button>
+  <button onclick="window.location.href='track.html'">Track</button>
+  <button onclick="window.location.href='view.html'">View</button>
+</nav>
 
 
   <script src="main.js"></script>

@@ -9,7 +9,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>Saved Data</h1>
+  <h1>Your Records</h1>
+  <p class="intro-text">
+  Review your entries and compare trends over time. Use the filters and chart to spot patterns.
+</p>
+
   <table id="dataTable" border="1"></table>
 <h2>View Timeframe</h2>
 <label for="timeframeSelect">Show data from:</label>
@@ -51,6 +55,12 @@
 
 
   <button id="backHome">Back to Setup</button>
+<button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
+<nav class="bottom-nav">
+  <button onclick="window.location.href='index.html'">Setup</button>
+  <button onclick="window.location.href='track.html'">Track</button>
+  <button onclick="window.location.href='view.html'">View</button>
+</nav>
 
   <script src="main.js"></script>
 </body>

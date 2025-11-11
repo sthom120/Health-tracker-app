@@ -210,10 +210,16 @@ if (document.getElementById("dailyForm")) {
 });
 
 
-    entries.push(data);
-    localStorage.setItem("entries", JSON.stringify(entries));
-    alert("Entry saved!");
-    form.reset();
+form.reset();
+const msg = document.getElementById("saveMessage");
+if (msg) {
+  msg.classList.remove("hidden");
+  setTimeout(() => msg.classList.add("hidden"), 2500);
+} else {
+  alert("Entry saved!"); // fallback if element not found
+}
+
+
   });
 
   // ---------- Navigate to data view ----------
@@ -267,7 +273,9 @@ if (document.getElementById("dataTable")) {
       const row = document.createElement("tr");
       let html = `<td>${e.date}</td>`;
       questions.forEach(q => {
-        html += `<td>${e.responses[q.id] ?? ""}</td>`;
+       const val = e.responses[q.id];
+html += `<td>${Array.isArray(val) ? val.join(", ") : (val ?? "")}</td>`;
+
 
       });
       row.innerHTML = html;
