@@ -151,15 +151,24 @@ if (document.getElementById("dailyForm")) {
         input = document.createElement("input");
         input.type = "date";
         break;
-      case "select": // user-defined options
-        input = document.createElement("select");
-        q.options.forEach(opt => {
-          const option = document.createElement("option");
-          option.value = opt;
-          option.textContent = opt;
-          input.appendChild(option);
-        });
-        break;
+      case "select": // user-defined options (now checkboxes)
+  input = document.createElement("div");
+  input.classList.add("multi-select-group");
+
+  q.options.forEach(opt => {
+    const label = document.createElement("label");
+    label.classList.add("checkbox-option");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.name = q.id;
+    checkbox.value = opt;
+
+    label.appendChild(checkbox);
+    label.append(" " + opt);
+    input.appendChild(label);
+  });
+  break;
       default: // plain text
         input = document.createElement("input");
         input.type = "text";
@@ -184,9 +193,22 @@ if (document.getElementById("dailyForm")) {
 
     // Store all answers by question id
     questions.forEach(q => {
-      const val = form.elements[q.id].value;
-      data.responses[q.id] = q.type === "boolean" ? val === "true" : val;
-    });
+  let val;
+
+  if (q.type === "boolean") {
+    val = form.elements[q.id].value === "true";
+  } else if (q.type === "select") {
+    // collect all checked boxes
+    const checked = Array.from(form.querySelectorAll(`input[name="${q.id}"]:checked`))
+      .map(cb => cb.value);
+    val = checked; // array of selected options
+  } else {
+    val = form.elements[q.id].value;
+  }
+
+  data.responses[q.id] = val;
+});
+
 
     entries.push(data);
     localStorage.setItem("entries", JSON.stringify(entries));
@@ -246,6 +268,7 @@ if (document.getElementById("dataTable")) {
       let html = `<td>${e.date}</td>`;
       questions.forEach(q => {
         html += `<td>${e.responses[q.id] ?? ""}</td>`;
+
       });
       row.innerHTML = html;
       table.appendChild(row);
@@ -304,7 +327,7 @@ if (document.getElementById("dataTable")) {
 
     // Convert values to numbers for charting
     function normalizeValue(val) {
-      if (val === true || val === "true") return 1;
+      if (val === true || val === "true") return 10;
       if (val === false || val === "false") return 0;
       const n = parseFloat(val);
       return isNaN(n) ? null : n;
