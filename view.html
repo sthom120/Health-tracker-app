@@ -3,78 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>View Data</title>
+
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
   <header id="appHeader">
-  <div class="logo-row">
-    <a href="index.html">
-  <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
-</a>
-
-    <div class="header-text">
-      <h1 id="appTitle">Personal Health Tracker</h1>
-      <p class="tagline">Small daily reflections, big long-term insights.</p>
+    <div class="logo-row">
+      <a href="index.html">
+        <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
+      </a>
+      <div class="header-text">
+        <h1 id="appTitle">Personal Health Tracker</h1>
+        <p class="tagline">Small daily reflections, big long-term insights.</p>
+      </div>
     </div>
-  </div>
+  </header>
+
   <h1>Your Records</h1>
   <p class="intro-text">
-  Review your entries and compare trends over time. Use the filters and chart to spot patterns.
-</p>
+    Review your entries and compare trends over time. Use the filters and chart to spot patterns.
+  </p>
 
   <div class="table-container">
-  <table id="dataTable" border="1"></table>
-</div>
-<h2>View Timeframe</h2>
-<label for="timeframeSelect">Show data from:</label>
-<select id="timeframeSelect">
-  <option value="all">All time</option>
-  <option value="7">Last 7 days</option>
-  <option value="30">Last 30 days</option>
-  <option value="180">Last 6 months</option>
-</select>
+    <table id="dataTable"></table>
+  </div>
 
+  <h2>View Timeframe</h2>
+  <label for="timeframeSelect">Show data from:</label>
+  <select id="timeframeSelect">
+    <option value="all">All time</option>
+    <option value="7">Last 7 days</option>
+    <option value="30">Last 30 days</option>
+    <option value="180">Last 6 months</option>
+  </select>
 
-<h2>Compare Two Factors Over Time</h2>
-<p>Select any two questions to compare on the same chart (Date on the X-axis):</p>
+  <h2>Compare Two Factors Over Time</h2>
+  <p>Select any two questions to compare on the same chart (Date on the X-axis):</p>
 
-<label>
-  First question:
-  <select id="factorA"></select>
-</label>
-<div id="optionsA" class="option-picker"></div>
+  <label>First question:
+    <select id="factorA"></select>
+  </label>
+  <div id="optionsA" class="option-picker"></div>
 
-<br>
+  <label>Second question:
+    <select id="factorB"></select>
+  </label>
+  <div id="optionsB" class="option-picker"></div>
 
-<label>
-  Second question:
-  <select id="factorB"></select>
-</label>
-<div id="optionsB" class="option-picker"></div>
+  <button id="compareBtn">Plot Comparison</button>
+  <button id="clearChartBtn" class="secondary">Clear Chart</button>
 
-<br>
+  <canvas id="compareChart"></canvas>
 
-<button id="compareBtn">Plot Comparison</button>
-<button id="clearChartBtn" class="secondary">Clear Chart</button>
+  <h2>Export Data</h2>
+  <button id="exportJSON">Download JSON</button>
+  <button id="exportCSV">Download CSV</button>
 
-<div id="compareResults"></div>
-<canvas id="compareChart"></canvas>
-<h2>Export Data</h2>
-<button id="exportJSON">Download JSON</button>
-<button id="exportCSV">Download CSV</button>
+  <button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
 
-
-  <button id="backHome">Back to Setup</button>
-<button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
-<nav class="bottom-nav">
-  <button onclick="window.location.href='index.html'">Setup</button>
-  <button onclick="window.location.href='track.html'">Track</button>
-  <button onclick="window.location.href='view.html'">View</button>
+  <nav class="bottom-nav">
+  <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
+  <button data-page="track" onclick="window.location.href='track.html'">Track</button>
+  <button data-page="view" onclick="window.location.href='view.html'">View</button>
 </nav>
 
+
+  <footer style="text-align:center; margin-top:3rem; font-size:0.85rem; color:#888;">
+    © <span id="year"></span> The Idiom Lab
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
   <script src="main.js"></script>
+  <script>
+  // Highlight the active bottom-nav button
+  const current = window.location.pathname.split("/").pop().split(".")[0];
+  document.querySelectorAll(".bottom-nav button").forEach(btn => {
+    if (btn.dataset.page === current) {
+      btn.classList.add("active");
+    }
+  });
+</script>
+
 </body>
 </html>

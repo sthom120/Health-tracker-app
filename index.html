@@ -3,95 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Health Tracker – Setup</title>
 
-  <title>Custom Tracker – Setup</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(() => console.log("Service worker registered"))
-      .catch(err => console.error("Service worker failed:", err));
-  }
-</script>
 
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log("Service worker registered"))
+        .catch(err => console.error("Service worker failed:", err));
+    }
+  </script>
 </head>
+
 <body>
   <header id="appHeader">
-  <div class="logo-row">
-    <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
-    <div class="header-text">
-      <p class="tagline">Small daily reflections, big long-term insights.</p>
+    <div class="logo-row">
+      <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
+      <div class="header-text">
+        <h1 id="appTitle">Personal Health Tracker</h1>
+        <p class="tagline">Small daily reflections, big long-term insights.</p>
+      </div>
     </div>
-  </div>
+  </header>
 
   <div id="greetingText"></div>
-</header>
 
-  <header id="greetingSection">
-    <h1 id="greetingText">Good Day!</h1>
-  </header>
-  <div id="quickActions" class="intro-block">
-  <button id="quickTrackBtn" class="primary">Ready to make a new Entry?</button>
-</div>
+  <section class="intro-block">
+    <button id="quickTrackBtn" class="primary">🌿 Ready to make a new Entry?</button>
+  </section>
 
-<section class="intro-section">
-  <h2>New here, or want to add something new to track?</h2>
-  <p>
-    This app helps you understand patterns in your health and lifestyle over time.  
-    You can track anything — from pain and stiffness, to exercise, sleep, or medication use.  
-    Add your own questions below to customize what you record each day.
-  </p>
-</section>
-
+  <section class="intro-section">
+    <h2>New here, or want to add something new to track?</h2>
+    <p>
+      This app helps you understand patterns in your health and lifestyle over time.
+      Track anything — from pain and stiffness to exercise, sleep, or medication.
+      Add your own questions below to customise your daily log.
+    </p>
+  </section>
 
   <form id="questionForm">
-  <label>
-    What do you want to track? Each item you add will appear in your daily log form.
-    <input type="text" id="questionText" required>
-  </label>
-
-  <label>
-    Choose how you'll answer:
-    <select id="questionType" required>
-      <option value="boolean">Yes / No</option>
-      <option value="number">Number (e.g. 1–10)</option>
-      <option value="text">Short text</option>
-      <option value="date">Date</option>
-      <option value="select">Select (choose from options)</option>
-    </select>
-  </label>
-
-  <div id="optionsContainer" style="display:none;">
     <label>
-      List your options (comma-separated):
-      <input type="text" id="questionOptions" placeholder="e.g. x, y, z">
+      What do you want to track? Each item you add will appear in your daily log form.
+      <input type="text" id="questionText" required>
     </label>
-  </div>
 
-  <button type="submit">Add to Tracker</button>
-</form>
+    <label>
+      Choose how you'll answer:
+      <select id="questionType" required>
+        <option value="boolean">Yes / No</option>
+        <option value="number">Number (e.g. 1–10)</option>
+        <option value="text">Short text</option>
+        <option value="date">Date</option>
+        <option value="select">Select (choose from options)</option>
+      </select>
+    </label>
 
+    <div id="optionsContainer" style="display:none;">
+      <label>
+        List your options (comma-separated):
+        <input type="text" id="questionOptions" placeholder="e.g. Morning, Afternoon, Evening">
+      </label>
+    </div>
+
+    <button type="submit">Add to Tracker</button>
+  </form>
 
   <h2>Current Questions</h2>
   <ul id="questionList"></ul>
-<h2>Current Questions</h2>
-<ul id="questionList"></ul>
 
-<div style="margin-top:1em;">
-  <button id="deleteAllQuestions" class="danger">Clear All Tracked questions</button>
-  <button id="deleteAllData" class="danger">Clear All Recorded Entries</button>
-</div>
+  <div style="margin-top:1em;">
+    <button id="deleteAllQuestions" class="danger">Clear All Tracked Questions</button>
+    <button id="deleteAllData" class="danger">Clear All Recorded Entries</button>
+  </div>
 
-<button id="goTrack">Start Logging</button>
-<nav class="bottom-nav">
-  <button onclick="window.location.href='index.html'">Setup</button>
-  <button onclick="window.location.href='track.html'">Track</button>
-  <button onclick="window.location.href='view.html'">View</button>
+  <button id="goTrack">Start Logging</button>
+
+  <nav class="bottom-nav">
+  <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
+  <button data-page="track" onclick="window.location.href='track.html'">Track</button>
+  <button data-page="view" onclick="window.location.href='view.html'">View</button>
 </nav>
 
+  <footer style="text-align:center; margin-top:3rem; font-size:0.85rem; color:#888;">
+    © <span id="year"></span> The Idiom Lab
+  </footer>
 
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
   <script src="main.js"></script>
+  <script>
+  // Highlight the active bottom-nav button
+  const current = window.location.pathname.split("/").pop().split(".")[0];
+  document.querySelectorAll(".bottom-nav button").forEach(btn => {
+    if (btn.dataset.page === current) {
+      btn.classList.add("active");
+    }
+  });
+</script>
+
 </body>
 </html>

@@ -3,45 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Daily Tracker</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <header id="appHeader">
-  <div class="logo-row">
-    <a href="index.html">
-  <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
-</a>
-
-    <div class="header-text">
-      <h1 id="appTitle">Personal Health Tracker</h1>
-      <p class="tagline">Small daily reflections, big long-term insights.</p>
+    <div class="logo-row">
+      <a href="index.html">
+        <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
+      </a>
+      <div class="header-text">
+        <h1 id="appTitle">Personal Health Tracker</h1>
+        <p class="tagline">Small daily reflections, big long-term insights.</p>
+      </div>
     </div>
-  </div>
-<p class="intro-text">
-  Record today’s data (or select another date). Check off or enter the values that apply.
-</p>
+  </header>
 
-<label>
-  Date:
-  <input type="date" id="entryDate" required>
-</label>
+  <section class="intro-section">
+    <p class="intro-text">
+      Record today’s data (or choose another date). Check or fill in the values that apply.
+    </p>
+  </section>
 
-<form id="dailyForm"></form>
+  <label>
+    Date:
+    <input type="date" id="entryDate" required>
+  </label>
+
+  <form id="dailyForm"></form>
 
   <button id="saveEntry">Save Entry</button>
   <button id="goView">View Data</button>
-<div id="saveMessage" class="hidden">✅ Entry saved!</div>
-<button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
-<nav class="bottom-nav">
-  <button onclick="window.location.href='index.html'">Setup</button>
-  <button onclick="window.location.href='track.html'">Track</button>
-  <button onclick="window.location.href='view.html'">View</button>
+
+  <div id="saveMessage" class="hidden">✅ Entry saved!</div>
+  <button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
+
+ <nav class="bottom-nav">
+  <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
+  <button data-page="track" onclick="window.location.href='track.html'">Track</button>
+  <button data-page="view" onclick="window.location.href='view.html'">View</button>
 </nav>
 
+
+  <footer style="text-align:center; margin-top:3rem; font-size:0.85rem; color:#888;">
+    © <span id="year"></span> The Idiom Lab
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
   <script src="main.js"></script>
-  
+  <script>
+  // Highlight the active bottom-nav button
+  const current = window.location.pathname.split("/").pop().split(".")[0];
+  document.querySelectorAll(".bottom-nav button").forEach(btn => {
+    if (btn.dataset.page === current) {
+      btn.classList.add("active");
+    }
+  });
+</script>
 
 </body>
 </html>
