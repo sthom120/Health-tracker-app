@@ -216,3 +216,55 @@ canvas {
     align-self: flex-end;
   }
 }
+
+
+@media (max-width: 600px) {
+  body {
+    padding: 1rem;
+    font-size: 0.95rem;
+  }
+
+  form {
+    padding: 1rem;
+    width: 100%;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  input, select, textarea, button {
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  table {
+    font-size: 0.85rem;
+    overflow-x: auto;
+    display: block;
+  }
+
+  th, td {
+    padding: 0.6rem;
+  }
+
+  #questionList li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  #questionList li button {
+    align-self: stretch;
+  }
+
+  button + button {
+    margin-left: 0;
+  }
+}
