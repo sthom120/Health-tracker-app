@@ -1,4 +1,6 @@
-/* Global Reset & Font */
+/* ============================================================
+   GLOBAL RESET & BASE STYLES
+   ============================================================ */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -19,24 +21,31 @@ body {
   margin: auto;
 }
 
-/* Typography */
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
 h1 {
   font-size: 2rem;
   margin-bottom: 0.5rem;
   font-weight: 700;
+  text-align: center;
 }
 
 h2 {
   font-size: 1.25rem;
   margin: 1.5rem 0 1rem;
   font-weight: 600;
+  text-align: center;
 }
 
 p {
   margin-bottom: 1rem;
+  text-align: center;
 }
 
-/* Form Styling */
+/* ============================================================
+   FORMS
+   ============================================================ */
 form {
   background: #ffffff;
   padding: 2rem;
@@ -62,6 +71,7 @@ input, select, textarea {
   border-radius: 6px;
   background-color: #fff;
   transition: border-color 0.2s ease-in-out;
+  width: 100%;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -69,12 +79,14 @@ input:focus, select:focus, textarea:focus {
   outline: none;
 }
 
-/* Buttons */
+/* ============================================================
+   BUTTONS
+   ============================================================ */
 button {
   background-color: #2a9d8f;
   color: white;
   font-weight: 600;
-  padding: 0.65rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -105,7 +117,9 @@ button + button {
   margin-left: 0.5rem;
 }
 
-/* List Styling */
+/* ============================================================
+   LISTS
+   ============================================================ */
 #questionList {
   list-style: none;
   padding: 0;
@@ -128,7 +142,9 @@ button + button {
   padding: 0.4rem 0.75rem;
 }
 
-/* Data Table */
+/* ============================================================
+   TABLES
+   ============================================================ */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -154,7 +170,9 @@ tr:nth-child(even) {
   background-color: #fafafa;
 }
 
-/* Charts */
+/* ============================================================
+   CHARTS
+   ============================================================ */
 canvas {
   max-width: 100%;
   margin-top: 1rem;
@@ -163,7 +181,9 @@ canvas {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Option Picker */
+/* ============================================================
+   OPTION PICKER
+   ============================================================ */
 .option-picker label {
   display: inline-block;
   margin-right: 1rem;
@@ -174,7 +194,9 @@ canvas {
   margin-right: 0.3em;
 }
 
-/* Utilities */
+/* ============================================================
+   UTILITIES
+   ============================================================ */
 #optionsContainer {
   margin-top: 0.5rem;
 }
@@ -187,37 +209,9 @@ canvas {
   margin-top: 2rem;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 600px) {
-  form {
-    padding: 1.5rem;
-  }
-
-  table, th, td {
-    font-size: 0.9rem;
-  }
-
-  button {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-
-  button + button {
-    margin-left: 0;
-  }
-
-  #questionList li {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  #questionList li button {
-    align-self: flex-end;
-  }
-}
-
-
+/* ============================================================
+   MOBILE RESPONSIVE DESIGN
+   ============================================================ */
 @media (max-width: 600px) {
   body {
     padding: 1rem;
@@ -230,7 +224,7 @@ canvas {
   }
 
   h1 {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     text-align: center;
   }
 
@@ -245,13 +239,13 @@ canvas {
   }
 
   table {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     overflow-x: auto;
     display: block;
   }
 
   th, td {
-    padding: 0.6rem;
+    padding: 0.7rem;
   }
 
   #questionList li {
@@ -264,7 +258,17 @@ canvas {
     align-self: stretch;
   }
 
+  button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
   button + button {
     margin-left: 0;
+  }
+
+  /* Add extra breathing room for on-screen keyboard */
+  body {
+    padding-bottom: 4rem;
   }
 }
