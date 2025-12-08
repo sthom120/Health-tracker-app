@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Redirect to PIN lock if session isn't unlocked -->
   <script>
-  if (localStorage.getItem("pinHash") && !sessionStorage.getItem("unlocked")) {
-    window.location.href = "pin-lock.html";
-  }
-</script>
+    if (!sessionStorage.getItem("unlocked")) {
+      window.location.href = "pin-lock.html";
+    }
+  </script>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
 
   <title>Daily Tracker</title>
 
@@ -37,11 +38,10 @@
     </p>
   </section>
 
-<div class="date-card">
-  <label for="entryDate">Date (required):</label>
-  <input type="date" id="entryDate" required>
-</div>
-
+  <div class="date-card">
+    <label for="entryDate">Date (required):</label>
+    <input type="date" id="entryDate" required>
+  </div>
 
   <form id="dailyForm"></form>
 
@@ -51,12 +51,11 @@
   <div id="saveMessage" class="hidden">✅ Entry saved!</div>
   <button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
 
- <nav class="bottom-nav">
-  <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
-  <button data-page="track" onclick="window.location.href='track.html'">Track</button>
-  <button data-page="view" onclick="window.location.href='view.html'">View</button>
-</nav>
-
+  <nav class="bottom-nav">
+    <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
+    <button data-page="track" onclick="window.location.href='track.html'">Track</button>
+    <button data-page="view" onclick="window.location.href='view.html'">View</button>
+  </nav>
 
   <footer style="text-align:center; margin-top:3rem; font-size:0.85rem; color:#888;">
     © <span id="year"></span> The Idiom Lab
@@ -67,14 +66,13 @@
   </script>
   <script src="main.js"></script>
   <script>
-  // Highlight the active bottom-nav button
-  const current = window.location.pathname.split("/").pop().split(".")[0];
-  document.querySelectorAll(".bottom-nav button").forEach(btn => {
-    if (btn.dataset.page === current) {
-      btn.classList.add("active");
-    }
-  });
-</script>
-
+    // Highlight the active bottom-nav button
+    const current = window.location.pathname.split("/").pop().split(".")[0];
+    document.querySelectorAll(".bottom-nav button").forEach(btn => {
+      if (btn.dataset.page === current) {
+        btn.classList.add("active");
+      }
+    });
+  </script>
 </body>
 </html>

@@ -1,16 +1,19 @@
 // service-worker.js
 
-const CACHE_NAME = "health-tracker-v1";
+const CACHE_NAME = "health-tracker-v2"; // bump version to bust old cache
+
 const FILES_TO_CACHE = [
-  "/",
-  "/index.html",
-  "/track.html",
-  "/view.html",
-  "/style.css",
-  "/main.js",
-  "/manifest.json",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
+  "./",
+  "./index.html",
+  "./track.html",
+  "./view.html",
+  "./pin-lock.html",
+  "./style.css",
+  "./main.js",
+  "./pin-lock.js",
+  "./manifest.json",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
 ];
 
 // Install event
@@ -20,7 +23,7 @@ self.addEventListener("install", event => {
       return cache.addAll(FILES_TO_CACHE);
     })
   );
-  console.log("Service Worker installed.");
+  console.log("Service Worker installed (v2).");
 });
 
 // Activate event
@@ -34,10 +37,10 @@ self.addEventListener("activate", event => {
       );
     })
   );
-  console.log("Service Worker activated.");
+  console.log("Service Worker activated (v2).");
 });
 
-// Fetch event
+// Fetch event – cache-first
 self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request).then(response => {
