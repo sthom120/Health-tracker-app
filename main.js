@@ -562,3 +562,115 @@ function renderTable() {
 
 
 
+/* ============================================================
+   PIN SETTINGS LOGIC
+   ============================================================ */
+
+async function hashPIN(pin) {
+  const enc = new TextEncoder().encode(pin);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Modal elements
+const pinModal = document.getElementById("pinModal");
+const pinModalTitle = document.getElementById("pinModalTitle");
+const pinModalMessage = document.getElementById("pinModalMessage");
+const pinInput = document.getElementById("pinInput");
+const newPinFields = document.getElementById("newPinFields");
+const newPin1 = document.getElementById("newPin1");
+const newPin2 = document.getElementById("newPin2");
+
+const confirmBtn = document.getElementById("pinModalConfirm");
+const cancelBtn = document.getElementById("pinModalCancel");
+
+let pinMode = ""; // "change", "remove"
+
+// Open modal
+function openPinModal(mode) {
+  pinMode = mode;
+  pinInput.value = "";
+  newPin1.value = "";
+  newPin2.value = "";
+
+  if (mode === "change") {
+    pinModalTitle.textContent = "Change PIN";
+    pinModalMessage.textContent = "Enter your current PIN";
+    newPinFields.classList.add("hidden");
+  }
+
+  if (mode === "remove") {
+    pinModalTitle.textContent = "Remove PIN";
+    pinModalMessage.textContent = "Enter your current PIN to remove the lock";
+    newPinFields.classList.add("hidden");
+  }
+
+  pinModal.classList.remove("hidden");
+}
+
+// Attach to buttons
+document.getElementById("changePinBtn")?.addEventListener("click", () =>
+  openPinModal("change")
+);
+
+document.getElementById("removePinBtn")?.addEventListener("click", () =>
+  openPinModal("remove")
+);
+
+// Cancel modal
+cancelBtn.addEventListener("click", () => {
+  pinModal.classList.add("hidden");
+});
+
+// Confirm logic
+confirmBtn.addEventListener("click", async () => {
+  const entered = pinInput.value;
+  const savedHash = localStorage.getItem("pinHash");
+
+  if (!savedHash) {
+    alert("No PIN is currently set.");
+    pinModal.classList.add("hidden");
+    return;
+  }
+
+  const enteredHash = await hashPIN(entered);
+
+  if (enteredHash !== savedHash) {
+    alert("Incorrect PIN.");
+    return;
+  }
+
+  // PIN is correct:
+  if (pinMode === "remove") {
+    localStorage.removeItem("pinHash");
+    alert("PIN removed.");
+    pinModal.classList.add("hidden");
+    return;
+  }
+
+  if (pinMode === "change") {
+    // Show new PIN fields
+    newPinFields.classList.remove("hidden");
+    pinModalMessage.textContent = "Enter new PIN and confirm";
+    pinMode = "change-final"; // progress to next stage
+    return;
+  }
+
+  // Final stage of change
+  if (pinMode === "change-final") {
+    if (newPin1.value.length < 4 || newPin1.value.length > 6) {
+      alert("PIN must be 4–6 digits.");
+      return;
+    }
+    if (newPin1.value !== newPin2.value) {
+      alert("PINs do not match.");
+      return;
+    }
+
+    const newHash = await hashPIN(newPin1.value);
+    localStorage.setItem("pinHash", newHash);
+
+    alert("PIN changed successfully.");
+    pinModal.classList.add("hidden");
+  }
+});
