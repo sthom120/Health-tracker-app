@@ -24,7 +24,7 @@ const messageEl = document.getElementById("pinMessage");
 if (!savedHash && !modeParam) {
   // First ever setup
   state = "setup1";
-  messageEl.textContent = "Create a 4–6 digit PIN";
+  messageEl.textContent = "Create a 4 digit PIN";
 } else if (!savedHash && modeParam) {
   // Trying to change/remove with no PIN set → send back
   alert("No PIN is set yet. Please create a PIN first.");
@@ -98,7 +98,7 @@ async function submitPIN() {
     } else {
       wrongPINAnimation();
       state = "setup1";
-      messageEl.textContent = "Create a 4–6 digit PIN";
+      messageEl.textContent = "Create a 4 digit PIN";
     }
     return;
   }

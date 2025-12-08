@@ -51,6 +51,9 @@
     <option value="180">Last 6 months</option>
   </select>
 
+  <h2>Your Summary</h2>
+  <div id="summaryCards" class="summary-grid"></div>
+
   <h2>Compare Two Factors Over Time</h2>
   <p>Select any two questions to compare on the same chart (Date on the X-axis):</p>
 
@@ -69,9 +72,14 @@
 
   <canvas id="compareChart"></canvas>
 
-  <h2>Export Data</h2>
+  <h2>Export / Import Data</h2>
   <button id="exportJSON">Download JSON</button>
   <button id="exportCSV">Download CSV</button>
+
+  <div style="margin-top: 1rem;">
+    <label for="importJSON">Import entries from JSON:</label>
+    <input type="file" id="importJSON" accept=".json,application/json">
+  </div>
 
   <button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
 

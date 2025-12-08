@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- 🔐 Redirect to PIN lock unless this session is already unlocked -->
   <script>
-    if (!sessionStorage.getItem("unlocked")) {
+    if (localStorage.getItem("pinHash") && !sessionStorage.getItem("unlocked")) {
       window.location.href = "pin-lock.html";
     }
   </script>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
 
   <title>Personal Health Tracker – Setup</title>
 
@@ -20,11 +20,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
 
-  <!-- 🧩 Service worker (root scope) -->
   <script>
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("service-worker.js")
+      navigator.serviceWorker.register("service-worker.js")
         .then(() => console.log("Service worker registered"))
         .catch(err => console.error("Service worker failed:", err));
     }
@@ -34,7 +32,7 @@
 <body>
   <header id="appHeader">
     <div class="logo-row">
-      <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
+      <img src="icon-192.png" alt="Health Tracker Logo" class="app-logo">
       <div class="header-text">
         <h1 id="appTitle">Personal Health Tracker</h1>
         <p class="tagline">Small daily reflections, big long-term insights.</p>
@@ -57,6 +55,7 @@
     </p>
   </section>
 
+  <!-- ============ ADD / EDIT QUESTIONS FORM ============ -->
   <form id="questionForm">
     <label>
       What do you want to track? Each item you add will appear in your daily log form.
@@ -87,20 +86,23 @@
   <h2>Current Questions</h2>
   <ul id="questionList"></ul>
 
-  <div style="margin-top:1em;">
+  <!-- ============ CLEAN, PROFESSIONAL BUTTON BLOCK ============ -->
+  <div class="index-actions">
     <button id="deleteAllQuestions" class="danger">Clear All Tracked Questions</button>
     <button id="deleteAllData" class="danger">Clear All Recorded Entries</button>
+    <button id="goTrack" class="primary">Start Logging</button>
   </div>
 
-  <button id="goTrack">Start Logging</button>
-
+  <!-- ============ SECURITY SETTINGS ============ -->
   <h2>Security Settings</h2>
+
   <div class="settings-card">
     <p>Manage your PIN lock for this device.</p>
     <button id="changePinBtn">Change PIN</button>
     <button id="removePinBtn" class="danger">Remove PIN</button>
   </div>
 
+  <!-- ============ BOTTOM NAVIGATION ============ -->
   <nav class="bottom-nav">
     <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
     <button data-page="track" onclick="window.location.href='track.html'">Track</button>
@@ -114,7 +116,28 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
+
+  <!-- ============ PIN MODAL (still works as-is if you keep it) ============ -->
+  <div id="pinModal" class="pin-modal hidden">
+    <div class="pin-modal-content">
+      <h3 id="pinModalTitle"></h3>
+      <p id="pinModalMessage"></p>
+      <input type="password" id="pinInput" maxlength="6" placeholder="Enter PIN">
+
+      <div id="newPinFields" class="hidden">
+        <input type="password" id="newPin1" maxlength="6" placeholder="New PIN">
+        <input type="password" id="newPin2" maxlength="6" placeholder="Confirm New PIN">
+      </div>
+
+      <div class="modal-buttons">
+        <button id="pinModalConfirm">Confirm</button>
+        <button id="pinModalCancel" class="secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script src="main.js"></script>
+
   <script>
     // Highlight the active bottom-nav button
     const current = window.location.pathname.split("/").pop().split(".")[0];
@@ -124,5 +147,6 @@
       }
     });
   </script>
+
 </body>
 </html>
