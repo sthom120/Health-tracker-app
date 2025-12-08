@@ -8,6 +8,16 @@
 
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Register service worker here too (in case user lands here first) -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("service-worker.js")
+        .then(() => console.log("Service worker registered from pin-lock"))
+        .catch(err => console.error("Service worker failed:", err));
+    }
+  </script>
 </head>
 
 <body class="pin-body">
@@ -20,6 +30,8 @@
       <span class="dot" id="dot2"></span>
       <span class="dot" id="dot3"></span>
       <span class="dot" id="dot4"></span>
+      <span class="dot" id="dot5"></span>
+      <span class="dot" id="dot6"></span>
     </div>
 
     <div class="pin-keypad">

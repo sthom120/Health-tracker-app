@@ -1,15 +1,16 @@
 /* ============================================================
    CUSTOM TRACKER – main.js
    ============================================================
-   This script controls all pages:
-   1. index.html → Setup questions and data controls
-   2. track.html → Enter daily data (manual date)
-   3. view.html  → View, filter, and correlate data
+   Controls:
+   1. index.html → Setup questions & data management
+   2. track.html → Enter daily data
+   3. view.html  → View & analyse data
+   4. PIN triggers → Open change/remove PIN screens
    ============================================================ */
 
 
 /* ============================================================
-   1️⃣  SETUP PAGE – Create / Delete Questions
+   1️⃣  SETUP PAGE — Create / Delete Questions
    ============================================================ */
 if (document.getElementById("questionForm")) {
 
@@ -23,62 +24,62 @@ if (document.getElementById("questionForm")) {
   const deleteAllQuestions = document.getElementById("deleteAllQuestions");
   const deleteAllData = document.getElementById("deleteAllData");
 
+  /* ---------- Greeting + Theme ---------- */
+  const greetingText = document.getElementById("greetingText");
+  const hour = new Date().getHours();
 
-  // Personalized greeting + tone
-const greetingText = document.getElementById("greetingText");
-const hour = new Date().getHours();
+  let greeting = "";
+  let subtext = "";
+  let themeClass = "";
 
-let greeting = "";
-let subtext = "";
-let themeClass = "";
+  if (hour < 12) {
+    greeting = "Good morning";
+    subtext = "Let's set the tone for a good day.";
+    themeClass = "theme-morning";
+  } else if (hour < 18) {
+    greeting = "Good afternoon";
+    subtext = "A great time to check in with yourself.";
+    themeClass = "theme-afternoon";
+  } else {
+    greeting = "Good evening";
+    subtext = "Reflect and unwind — how was today?";
+    themeClass = "theme-evening";
+  }
 
-if (hour < 12) {
-  greeting = "Good morning";
-  subtext = "Let's set the tone for a good day.";
-  themeClass = "theme-morning";
-} else if (hour < 18) {
-  greeting = "Good afternoon";
-  subtext = "A great time to check in with yourself.";
-  themeClass = "theme-afternoon";
-} else {
-  greeting = "Good evening";
-  subtext = "Reflect and unwind — how was today?";
-  themeClass = "theme-evening";
-}
+  if (greetingText) {
+    greetingText.innerHTML = `
+      <h1>${greeting}</h1>
+      <p id="greetingSub">${subtext}</p>
+    `;
+    document.body.classList.add(themeClass);
+  }
 
-if (greetingText) {
-  greetingText.innerHTML = `
-    <h1>${greeting}</h1>
-    <p id="greetingSub">${subtext}</p>
-  `;
-  document.body.classList.add(themeClass);
-}
-
-
-
-  // ---------- Load existing questions ----------
+  // ---------- Load saved questions ----------
   let questions = JSON.parse(localStorage.getItem("questions") || "[]");
 
-
-  // ---------- Render question list ----------
+  // ---------- Render Question List ----------
   function renderList() {
     list.innerHTML = "";
     if (questions.length === 0) {
       list.innerHTML = "<li><em>No questions added yet.</em></li>";
       return;
     }
+
     questions.forEach((q, i) => {
       const li = document.createElement("li");
+
       let extra = "";
       if (q.type === "select" && q.options)
         extra = ` [${q.options.join(", ")}]`;
+
       li.textContent = `${i + 1}. ${q.text} (${q.type})${extra}`;
 
-      // Add small "Delete" button next to each question
+      // Delete button
       const delBtn = document.createElement("button");
       delBtn.textContent = "Delete";
       delBtn.style.marginLeft = "0.5em";
       delBtn.onclick = () => deleteQuestion(q.id);
+
       li.appendChild(delBtn);
       list.appendChild(li);
     });
@@ -86,41 +87,42 @@ if (greetingText) {
 
   // ---------- Delete a single question ----------
   function deleteQuestion(id) {
-    if (!confirm("Delete this question and remove it from all entries?")) return;
+    if (!confirm("Delete this question and remove its data?")) return;
 
-    // Remove from list of questions
     questions = questions.filter(q => q.id !== id);
     localStorage.setItem("questions", JSON.stringify(questions));
 
-    // Remove that question’s data from every saved entry
     const entries = JSON.parse(localStorage.getItem("entries") || "[]");
     entries.forEach(e => delete e.responses[id]);
     localStorage.setItem("entries", JSON.stringify(entries));
 
     renderList();
-    alert("Question deleted.");
   }
 
-  // ---------- Show extra input for select options ----------
+  // ---------- Show/hide options for "select" ----------
   questionType.addEventListener("change", () => {
     optionsContainer.style.display =
       questionType.value === "select" ? "block" : "none";
   });
 
-  // ---------- Add new question ----------
+  // ---------- Add Question ----------
   form.addEventListener("submit", e => {
     e.preventDefault();
+
     const text = document.getElementById("questionText").value.trim();
     const type = questionType.value;
     const opts = optionsInput.value.trim();
+
     if (!text) return;
 
     const question = { id: Date.now(), text, type };
+
     if (type === "select" && opts)
       question.options = opts.split(",").map(o => o.trim());
 
     questions.push(question);
     localStorage.setItem("questions", JSON.stringify(questions));
+
     renderList();
     form.reset();
     optionsContainer.style.display = "none";
@@ -128,77 +130,70 @@ if (greetingText) {
 
   // ---------- Delete ALL questions + data ----------
   deleteAllQuestions.addEventListener("click", () => {
-    if (!confirm("Delete ALL questions and related data?")) return;
+    if (!confirm("Delete ALL questions and ALL saved entries?")) return;
     localStorage.removeItem("questions");
     localStorage.removeItem("entries");
     questions = [];
     renderList();
-    alert("All questions and data cleared.");
   });
 
-  // ---------- Delete ONLY recorded data ----------
+  // ---------- Delete ONLY entries ----------
   deleteAllData.addEventListener("click", () => {
-    if (!confirm("Delete ALL recorded entries (keep questions)?")) return;
+    if (!confirm("Delete all recorded entries?")) return;
     localStorage.removeItem("entries");
-    alert("All recorded data cleared.");
   });
 
   renderList();
 
-  // ---------- Navigate to daily form ----------
-  goTrack.addEventListener("click", () => {
-    window.location.href = "track.html";
-  });
+  // ---------- Start Logging ----------
+  goTrack.addEventListener("click", () => window.location.href = "track.html");
 }
 
-const quickTrackBtn = document.getElementById("quickTrackBtn");
-if (quickTrackBtn) {
-  quickTrackBtn.addEventListener("click", () => {
-    window.location.href = "track.html";
-  });
-}
+// Quick Track Button
+document.getElementById("quickTrackBtn")?.addEventListener("click", () => {
+  window.location.href = "track.html";
+});
 
 
 /* ============================================================
-   2️⃣  TRACK PAGE – Record Daily Data
+   2️⃣  TRACK PAGE — Record Daily Data
    ============================================================ */
 if (document.getElementById("dailyForm")) {
-  // ---------- Load questions ----------
+
   const questions = JSON.parse(localStorage.getItem("questions") || "[]");
   const form = document.getElementById("dailyForm");
   const saveBtn = document.getElementById("saveEntry");
   const goView = document.getElementById("goView");
 
-  // ---------- Dynamically build the form ----------
+  // Build form inputs dynamically
   questions.forEach(q => {
-    // Card container
     const card = document.createElement("div");
     card.classList.add("entry-card");
 
-    // Label for the field
-    const fieldLabel = document.createElement("label");
-    fieldLabel.textContent = q.text + ": ";
+    const label = document.createElement("label");
+    label.textContent = q.text + ": ";
 
     let input;
+
     switch (q.type) {
-      case "boolean": {
+      case "boolean":
         input = document.createElement("select");
-        input.innerHTML = "<option value='true'>Yes</option><option value='false'>No</option>";
+        input.innerHTML = `<option value="true">Yes</option><option value="false">No</option>`;
         break;
-      }
-      case "number": {
+
+      case "number":
         input = document.createElement("input");
         input.type = "number";
         input.min = 0;
         input.max = 10;
         break;
-      }
-      case "date": {
+
+      case "date":
         input = document.createElement("input");
         input.type = "date";
         break;
-      }
-      case "select": {
+
+      case "select":
         input = document.createElement("div");
         input.classList.add("multi-select-group");
         (q.options || []).forEach(opt => {
@@ -213,25 +208,22 @@ if (document.getElementById("dailyForm")) {
           input.appendChild(optLabel);
         });
         break;
-      }
-      default: {
+
+      default:
         input = document.createElement("input");
         input.type = "text";
-      }
     }
 
-    // set name for non-select controls (select uses checkbox group names)
     if (q.type !== "select") input.name = q.id;
 
-    fieldLabel.appendChild(input);
-    card.appendChild(fieldLabel);
+    label.appendChild(input);
+    card.appendChild(label);
     form.appendChild(card);
   });
 
-  // ---------- Save entry ----------
+  // ---------- Save Entry ----------
   saveBtn.addEventListener("click", () => {
     const entries = JSON.parse(localStorage.getItem("entries") || "[]");
-
     const entryDate =
       document.getElementById("entryDate").value ||
       new Date().toISOString().split("T")[0];
@@ -240,16 +232,17 @@ if (document.getElementById("dailyForm")) {
 
     questions.forEach(q => {
       let val;
+
       if (q.type === "boolean") {
         val = form.elements[q.id].value === "true";
       } else if (q.type === "select") {
-        const checked = Array.from(
+        val = Array.from(
           form.querySelectorAll(`input[name="${q.id}"]:checked`)
         ).map(cb => cb.value);
-        val = checked;
       } else {
         val = form.elements[q.id].value;
       }
+
       data.responses[q.id] = val;
     });
 
@@ -257,106 +250,91 @@ if (document.getElementById("dailyForm")) {
     form.reset();
 
     const msg = document.getElementById("saveMessage");
-    if (msg) {
-      msg.classList.remove("hidden");
-      setTimeout(() => msg.classList.add("hidden"), 2500);
-    } else {
-      alert("Entry saved!");
-    }
+    msg.classList.remove("hidden");
+    setTimeout(() => msg.classList.add("hidden"), 2500);
   });
 
-  // ---------- Navigate to data view ----------
-  goView.addEventListener("click", () => {
-    window.location.href = "view.html";
-  });
+  goView.addEventListener("click", () => window.location.href = "view.html");
 }
 
+
 /* ============================================================
-   3️⃣  VIEW PAGE – Display + Analyze Data
+   3️⃣  VIEW PAGE — Display + Analyse Data
    ============================================================ */
 if (document.getElementById("dataTable")) {
 
-  // ---------- Load questions + entries ----------
   const table = document.getElementById("dataTable");
-  const backHome = document.getElementById("backHome");
   const questions = JSON.parse(localStorage.getItem("questions") || "[]");
   const entries = JSON.parse(localStorage.getItem("entries") || "[]");
   const timeframeSelect = document.getElementById("timeframeSelect");
 
-  // ---------- Filter helpers ----------
-  function filterEntriesByTimeframe(days) {
+  // Filtering helpers
+  function filterEntries(days) {
     if (days === "all") return entries;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - Number(days));
     return entries.filter(e => new Date(e.date) >= cutoff);
   }
 
-  function getFilteredEntries() {
-    const selected = timeframeSelect ? timeframeSelect.value : "all";
-    const filtered = filterEntriesByTimeframe(selected);
-    return filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+  function getEntries() {
+    const days = timeframeSelect.value || "all";
+    return filterEntries(days).sort((a, b) => new Date(a.date) - new Date(b.date));
   }
 
-  // Re-render table whenever timeframe changes
-  if (timeframeSelect) {
-    timeframeSelect.addEventListener("change", renderTable);
-  }
+  timeframeSelect?.addEventListener("change", renderTable);
 
-  // ---------- Build table ----------
-function renderTable() {
-  table.innerHTML = "";
-  const header = document.createElement("tr");
-  header.innerHTML =
-    "<th>Date</th>" +
-    questions.map(q => `<th>${q.text}</th>`).join("") +
-    "<th>Actions</th>"; // new column for delete
-  table.appendChild(header);
+  // ---------- Render Table ----------
+  function renderTable() {
+    table.innerHTML = "";
 
-  const allEntries = getFilteredEntries();
+    const header = document.createElement("tr");
+    header.innerHTML =
+      "<th>Date</th>" +
+      questions.map(q => `<th>${q.text}</th>`).join("") +
+      "<th>Actions</th>";
 
-  allEntries.forEach((e, index) => {
-    const row = document.createElement("tr");
-    let html = `<td>${e.date}</td>`;
-    questions.forEach(q => {
-      const val = e.responses[q.id];
-      html += `<td>${Array.isArray(val) ? val.join(", ") : (val ?? "")}</td>`;
+    table.appendChild(header);
+
+    const filtered = getEntries();
+
+    filtered.forEach((e, idx) => {
+      const row = document.createElement("tr");
+      let html = `<td>${e.date}</td>`;
+
+      questions.forEach(q => {
+        const val = e.responses[q.id];
+        html += `<td>${Array.isArray(val) ? val.join(", ") : (val ?? "")}</td>`;
+      });
+
+      html += `<td><button class="danger small-delete" data-index="${idx}">Delete</button></td>`;
+      row.innerHTML = html;
+      table.appendChild(row);
     });
 
-    // add delete button column
-    html += `<td><button class="danger small-delete" data-index="${index}">Delete</button></td>`;
-    row.innerHTML = html;
-    table.appendChild(row);
-  });
+    // Delete buttons
+    table.querySelectorAll(".small-delete").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (!confirm("Delete this entry?")) return;
 
-  // attach delete button functionality
-  table.querySelectorAll(".small-delete").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const index = btn.dataset.index;
-      if (confirm("Delete this entry?")) {
-        const entries = JSON.parse(localStorage.getItem("entries") || "[]");
-        const filtered = getFilteredEntries();
-        const entryToDelete = filtered[index];
+        const idx = btn.dataset.index;
+        const filtered = getEntries();
+        const target = filtered[idx];
 
-        // remove entry by matching date + responses
         const updated = entries.filter(e =>
-          !(e.date === entryToDelete.date &&
-            JSON.stringify(e.responses) === JSON.stringify(entryToDelete.responses))
+          !(e.date === target.date &&
+            JSON.stringify(e.responses) === JSON.stringify(target.responses))
         );
 
         localStorage.setItem("entries", JSON.stringify(updated));
         renderTable();
-        alert("Entry deleted!");
-      }
+      });
     });
-  });
-}
+  }
 
-  renderTable(); // initial display
+  renderTable();
 
+  /* ---------- CHARTING LOGIC ---------- */
 
-  /* ============================================================
-     MULTI-FACTOR COMPARISON CHART (with filters + clear)
-     ============================================================ */
   const factorASelect = document.getElementById("factorA");
   const factorBSelect = document.getElementById("factorB");
   const optionsA = document.getElementById("optionsA");
@@ -364,21 +342,23 @@ function renderTable() {
   const compareBtn = document.getElementById("compareBtn");
   const clearChartBtn = document.getElementById("clearChartBtn");
   const compareCanvas = document.getElementById("compareChart");
-  let currentChart = null; // store reference so we can clear it
 
-  // Create checkboxes for select-type questions
+  let currentChart = null;
+
   function renderOptionPicker(container, question) {
     container.innerHTML = "";
-    if (question && question.type === "select" && question.options) {
+    if (question?.type === "select" && question.options) {
       const heading = document.createElement("p");
       heading.textContent = "Include options:";
       container.appendChild(heading);
+
       question.options.forEach(opt => {
         const label = document.createElement("label");
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.value = opt;
         cb.checked = true;
+
         label.appendChild(cb);
         label.append(" " + opt);
         container.appendChild(label);
@@ -386,53 +366,52 @@ function renderTable() {
     }
   }
 
-  // Populate dropdowns
   if (factorASelect && factorBSelect) {
     questions.forEach(q => {
-      const optA = new Option(q.text, q.id);
-      const optB = new Option(q.text, q.id);
-      factorASelect.appendChild(optA);
-      factorBSelect.appendChild(optB);
+      factorASelect.append(new Option(q.text, q.id));
+      factorBSelect.append(new Option(q.text, q.id));
     });
 
     factorASelect.addEventListener("change", () =>
       renderOptionPicker(optionsA, questions.find(q => q.id == factorASelect.value))
     );
+
     factorBSelect.addEventListener("change", () =>
       renderOptionPicker(optionsB, questions.find(q => q.id == factorBSelect.value))
     );
 
-    // Convert values to numbers for charting
-    function normalizeValue(val) {
+    function normalize(val) {
       if (val === true || val === "true") return 10;
       if (val === false || val === "false") return 0;
       const n = parseFloat(val);
       return isNaN(n) ? null : n;
     }
 
-    // Plot chart
     compareBtn.addEventListener("click", () => {
       const idA = factorASelect.value;
       const idB = factorBSelect.value;
+
       if (!idA || !idB || idA === idB) {
         alert("Please choose two different questions.");
         return;
       }
 
-      const sortedEntries = getFilteredEntries();
-      const labels = sortedEntries.map(e => e.date);
+      const filtered = getEntries();
+      const labels = filtered.map(e => e.date);
+
       const qA = questions.find(q => q.id == idA);
       const qB = questions.find(q => q.id == idB);
+
       const datasets = [];
 
-      const selectedOptsA = Array.from(optionsA.querySelectorAll("input:checked")).map(c => c.value);
-      const selectedOptsB = Array.from(optionsB.querySelectorAll("input:checked")).map(c => c.value);
+      const optsA = Array.from(optionsA.querySelectorAll("input:checked")).map(c => c.value);
+      const optsB = Array.from(optionsB.querySelectorAll("input:checked")).map(c => c.value);
 
-      // Question A
-      if (qA.type === "select" && qA.options) {
+      // Dataset A
+      if (qA.type === "select") {
         qA.options.forEach((opt, idx) => {
-          if (!selectedOptsA.includes(opt)) return;
-          const data = sortedEntries.map(e => (e.responses[idA] === opt ? 1 : 0));
+          if (!optsA.includes(opt)) return;
+          const data = filtered.map(e => (e.responses[idA] === opt ? 1 : 0));
           datasets.push({
             label: `${qA.text}: ${opt}`,
             data,
@@ -443,21 +422,20 @@ function renderTable() {
           });
         });
       } else {
-        const data = sortedEntries.map(e => normalizeValue(e.responses[idA]));
         datasets.push({
           label: qA.text,
-          data,
+          data: filtered.map(e => normalize(e.responses[idA])),
           borderColor: "rgba(255,99,132,1)",
           borderWidth: 2,
           fill: false
         });
       }
 
-      // Question B
-      if (qB.type === "select" && qB.options) {
+      // Dataset B
+      if (qB.type === "select") {
         qB.options.forEach((opt, idx) => {
-          if (!selectedOptsB.includes(opt)) return;
-          const data = sortedEntries.map(e => (e.responses[idB] === opt ? 1 : 0));
+          if (!optsB.includes(opt)) return;
+          const data = filtered.map(e => (e.responses[idB] === opt ? 1 : 0));
           datasets.push({
             label: `${qB.text}: ${opt}`,
             data,
@@ -468,20 +446,17 @@ function renderTable() {
           });
         });
       } else {
-        const data = sortedEntries.map(e => normalizeValue(e.responses[idB]));
         datasets.push({
           label: qB.text,
-          data,
+          data: filtered.map(e => normalize(e.responses[idB])),
           borderColor: "rgba(54,162,235,1)",
           borderWidth: 2,
           fill: false
         });
       }
 
-      // Clear previous chart if it exists
       if (currentChart) currentChart.destroy();
 
-      // Draw new chart
       currentChart = new Chart(compareCanvas, {
         type: "line",
         data: { labels, datasets },
@@ -503,174 +478,61 @@ function renderTable() {
       });
     });
 
-    // Clear the chart and reset selections
     clearChartBtn.addEventListener("click", () => {
       if (currentChart) currentChart.destroy();
       currentChart = null;
+
       optionsA.innerHTML = "";
       optionsB.innerHTML = "";
       factorASelect.value = "";
       factorBSelect.value = "";
     });
   }
-  /* ============================================================
-     EXPORT DATA (JSON + CSV)
-     ============================================================ */
-  const exportJSONBtn = document.getElementById("exportJSON");
-  const exportCSVBtn = document.getElementById("exportCSV");
 
-  // ---------- Helper: download a blob ----------
-  function downloadFile(filename, content, type) {
-    const blob = new Blob([content], { type });
+
+  /* ---------- Export buttons ---------- */
+  document.getElementById("exportJSON")?.addEventListener("click", () => {
+    const data = JSON.parse(localStorage.getItem("entries") || "[]");
+    if (!data.length) return alert("No entries to export.");
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
+    const a = Object.assign(document.createElement("a"), { href: url, download: "tracker-data.json" });
     a.click();
     URL.revokeObjectURL(url);
-  }
-
-  // ---------- Export JSON ----------
-  exportJSONBtn?.addEventListener("click", () => {
-    const data = JSON.parse(localStorage.getItem("entries") || "[]");
-    if (!data.length) return alert("No entries to export.");
-    const json = JSON.stringify(data, null, 2);
-    downloadFile("tracker-data.json", json, "application/json");
   });
 
-  // ---------- Export CSV ----------
-  exportCSVBtn?.addEventListener("click", () => {
-    const data = JSON.parse(localStorage.getItem("entries") || "[]");
-    if (!data.length) return alert("No entries to export.");
+  document.getElementById("exportCSV")?.addEventListener("click", () => {
+    const entries = JSON.parse(localStorage.getItem("entries") || "[]");
+    if (!entries.length) return alert("No entries to export.");
 
-    const questions = JSON.parse(localStorage.getItem("questions") || "[]");
     const headers = ["Date", ...questions.map(q => q.text)];
-    const rows = data.map(entry => {
-      const responses = questions.map(q => entry.responses[q.id] ?? "");
-      return [entry.date, ...responses];
-    });
+    const rows = entries.map(entry => [
+      entry.date,
+      ...questions.map(q => entry.responses[q.id] ?? "")
+    ]);
 
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
-    downloadFile("tracker-data.csv", csv, "text/csv");
-  });
+    const csv = [headers, ...rows]
+      .map(r => r.map(v => `"${v}"`).join(","))
+      .join("\n");
 
-  // ---------- Back to setup ----------
-  backHome.addEventListener("click", () => {
-    window.location.href = "index.html";
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement("a"), { href: url, download: "tracker-data.csv" });
+    a.click();
+    URL.revokeObjectURL(url);
   });
 }
-
 
 
 /* ============================================================
-   PIN SETTINGS LOGIC
+   🔐 PIN SETTINGS — OPEN PIN MANAGEMENT SCREEN
+   (Actual PIN logic lives in pin-lock.js)
    ============================================================ */
 
-async function hashPIN(pin) {
-  const enc = new TextEncoder().encode(pin);
-  const buf = await crypto.subtle.digest("SHA-256", enc);
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-// Modal elements
-const pinModal = document.getElementById("pinModal");
-const pinModalTitle = document.getElementById("pinModalTitle");
-const pinModalMessage = document.getElementById("pinModalMessage");
-const pinInput = document.getElementById("pinInput");
-const newPinFields = document.getElementById("newPinFields");
-const newPin1 = document.getElementById("newPin1");
-const newPin2 = document.getElementById("newPin2");
-
-const confirmBtn = document.getElementById("pinModalConfirm");
-const cancelBtn = document.getElementById("pinModalCancel");
-
-let pinMode = ""; // "change", "remove"
-
-// Open modal
-function openPinModal(mode) {
-  pinMode = mode;
-  pinInput.value = "";
-  newPin1.value = "";
-  newPin2.value = "";
-
-  if (mode === "change") {
-    pinModalTitle.textContent = "Change PIN";
-    pinModalMessage.textContent = "Enter your current PIN";
-    newPinFields.classList.add("hidden");
-  }
-
-  if (mode === "remove") {
-    pinModalTitle.textContent = "Remove PIN";
-    pinModalMessage.textContent = "Enter your current PIN to remove the lock";
-    newPinFields.classList.add("hidden");
-  }
-
-  pinModal.classList.remove("hidden");
-}
-
-// Attach to buttons
-document.getElementById("changePinBtn")?.addEventListener("click", () =>
-  openPinModal("change")
-);
-
-document.getElementById("removePinBtn")?.addEventListener("click", () =>
-  openPinModal("remove")
-);
-
-// Cancel modal
-cancelBtn.addEventListener("click", () => {
-  pinModal.classList.add("hidden");
+document.getElementById("changePinBtn")?.addEventListener("click", () => {
+  window.location.href = "pin-lock.html?mode=change";
 });
 
-// Confirm logic
-confirmBtn.addEventListener("click", async () => {
-  const entered = pinInput.value;
-  const savedHash = localStorage.getItem("pinHash");
-
-  if (!savedHash) {
-    alert("No PIN is currently set.");
-    pinModal.classList.add("hidden");
-    return;
-  }
-
-  const enteredHash = await hashPIN(entered);
-
-  if (enteredHash !== savedHash) {
-    alert("Incorrect PIN.");
-    return;
-  }
-
-  // PIN is correct:
-  if (pinMode === "remove") {
-    localStorage.removeItem("pinHash");
-    alert("PIN removed.");
-    pinModal.classList.add("hidden");
-    return;
-  }
-
-  if (pinMode === "change") {
-    // Show new PIN fields
-    newPinFields.classList.remove("hidden");
-    pinModalMessage.textContent = "Enter new PIN and confirm";
-    pinMode = "change-final"; // progress to next stage
-    return;
-  }
-
-  // Final stage of change
-  if (pinMode === "change-final") {
-    if (newPin1.value.length < 4 || newPin1.value.length > 6) {
-      alert("PIN must be 4–6 digits.");
-      return;
-    }
-    if (newPin1.value !== newPin2.value) {
-      alert("PINs do not match.");
-      return;
-    }
-
-    const newHash = await hashPIN(newPin1.value);
-    localStorage.setItem("pinHash", newHash);
-
-    alert("PIN changed successfully.");
-    pinModal.classList.add("hidden");
-  }
+document.getElementById("removePinBtn")?.addEventListener("click", () => {
+  window.location.href = "pin-lock.html?mode=remove";
 });

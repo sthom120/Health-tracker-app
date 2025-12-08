@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Redirect to PIN lock if session isn't unlocked -->
+  <!-- 🔐 Redirect to PIN lock if session isn't unlocked -->
   <script>
     if (!sessionStorage.getItem("unlocked")) {
       window.location.href = "pin-lock.html";
@@ -66,7 +66,6 @@
   </script>
   <script src="main.js"></script>
   <script>
-    // Highlight the active bottom-nav button
     const current = window.location.pathname.split("/").pop().split(".")[0];
     document.querySelectorAll(".bottom-nav button").forEach(btn => {
       if (btn.dataset.page === current) {

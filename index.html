@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
 
-  <!-- 🧩 Register service worker from the ROOT now -->
+  <!-- 🧩 Service worker (root scope) -->
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
@@ -94,7 +94,6 @@
 
   <button id="goTrack">Start Logging</button>
 
-  <!-- 🔐 Security / PIN settings -->
   <h2>Security Settings</h2>
   <div class="settings-card">
     <p>Manage your PIN lock for this device.</p>
@@ -115,27 +114,6 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
-
-  <!-- PIN Modal -->
-  <div id="pinModal" class="pin-modal hidden">
-    <div class="pin-modal-content">
-      <h3 id="pinModalTitle"></h3>
-      <p id="pinModalMessage"></p>
-
-      <input type="password" id="pinInput" maxlength="6" placeholder="Enter PIN">
-
-      <div id="newPinFields" class="hidden">
-        <input type="password" id="newPin1" maxlength="6" placeholder="New PIN">
-        <input type="password" id="newPin2" maxlength="6" placeholder="Confirm New PIN">
-      </div>
-
-      <div class="modal-buttons">
-        <button id="pinModalConfirm">Confirm</button>
-        <button id="pinModalCancel" class="secondary">Cancel</button>
-      </div>
-    </div>
-  </div>
-
   <script src="main.js"></script>
   <script>
     // Highlight the active bottom-nav button
