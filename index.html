@@ -12,7 +12,7 @@
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
 
   <title>Personal Health Tracker – Setup</title>
 
@@ -32,7 +32,7 @@
 <body>
   <header id="appHeader">
     <div class="logo-row">
-      <img src="icon-192.png" alt="Health Tracker Logo" class="app-logo">
+      <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
       <div class="header-text">
         <h1 id="appTitle">Personal Health Tracker</h1>
         <p class="tagline">Small daily reflections, big long-term insights.</p>
@@ -98,8 +98,17 @@
 
   <div class="settings-card">
     <p>Manage your PIN lock for this device.</p>
-    <button id="changePinBtn">Change PIN</button>
-    <button id="removePinBtn" class="danger">Remove PIN</button>
+    <button onclick="window.location.href='pin-lock.html'">
+      Set PIN
+    </button>
+    <button onclick="window.location.href='pin-lock.html?mode=change'">
+      Change PIN
+    </button>
+    <button
+      class="danger"
+      onclick="window.location.href='pin-lock.html?mode=remove'">
+      Remove PIN
+    </button>
   </div>
 
   <!-- ============ BOTTOM NAVIGATION ============ -->
@@ -116,25 +125,6 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
-
-  <!-- ============ PIN MODAL (still works as-is if you keep it) ============ -->
-  <div id="pinModal" class="pin-modal hidden">
-    <div class="pin-modal-content">
-      <h3 id="pinModalTitle"></h3>
-      <p id="pinModalMessage"></p>
-      <input type="password" id="pinInput" maxlength="6" placeholder="Enter PIN">
-
-      <div id="newPinFields" class="hidden">
-        <input type="password" id="newPin1" maxlength="6" placeholder="New PIN">
-        <input type="password" id="newPin2" maxlength="6" placeholder="Confirm New PIN">
-      </div>
-
-      <div class="modal-buttons">
-        <button id="pinModalConfirm">Confirm</button>
-        <button id="pinModalCancel" class="secondary">Cancel</button>
-      </div>
-    </div>
-  </div>
 
   <script src="main.js"></script>
 
