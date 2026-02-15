@@ -1,25 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!--
+    NOTE TO SELF:
+    This runs BEFORE anything renders. It's here to prevent a "flash" of the app
+    if a PIN is set and the session isn't unlocked yet.
+    Keeping it as the very first thing in <head> is intentional.
+  -->
   <script>
     if (localStorage.getItem("pinHash") && !sessionStorage.getItem("unlocked")) {
-      window.location.href = "pin-lock.html";
+      window.location.replace("pin-lock.html");
     }
   </script>
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <!--
+    NOTE TO SELF:
+    Standard meta order:
+    1) charset
+    2) viewport
+    3) title
+    4) PWA/SEO bits
+  -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Personal Health Tracker – Setup</title>
 
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="manifest" href="manifest.json">
+  <!--
+    NOTE TO SELF:
+    PWA / iOS "add to home screen" support.
+    - apple-mobile-web-app-capable enables standalone mode on iOS.
+    - status-bar-style controls the status bar style.
+    - apple-touch-icon is the icon used on iOS home screen.
+  -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
 
+  <!--
+    NOTE TO SELF:
+    Web App Manifest = tells the browser your app name, icons, theme colours, etc.
+    Keep it in <head> so the browser can discover it early.
+  -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!--
+    NOTE TO SELF:
+    CSS first, so the page styles apply ASAP.
+    The Google font link is kept after your CSS; either order is acceptable.
+    If you want slightly faster font load later, consider:
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  -->
+  <link rel="stylesheet" href="style.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!--
+    NOTE TO SELF:
+    Service worker registration.
+    Best practice is usually to register after page load (at end of body),
+    but keeping it here is fine because it's small.
+    If you ever see weird caching issues while developing, unregister SW in devtools.
+  -->
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js")
@@ -30,9 +75,13 @@
 </head>
 
 <body>
+  <!--
+    NOTE TO SELF:
+    Header = app identity (logo + title + tagline).
+  -->
   <header id="appHeader">
     <div class="logo-row">
-      <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
+      <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo" />
       <div class="header-text">
         <h1 id="appTitle">Personal Health Tracker</h1>
         <p class="tagline">Small daily reflections, big long-term insights.</p>
@@ -40,103 +89,204 @@
     </div>
   </header>
 
+  <!--
+    NOTE TO SELF:
+    Greeting text is filled in by js/index.js based on time of day.
+  -->
   <div id="greetingText"></div>
 
-  <section class="intro-block">
-    <button id="quickTrackBtn" class="primary">🌿 Ready to make a new Entry?</button>
-  </section>
+  <main>
+    <section class="intro-block">
+      <button id="quickTrackBtn" class="primary">🌿 Ready to make a new Entry?</button>
+    </section>
 
-  <section class="intro-section">
-    <h2>New here, or want to add something new to track?</h2>
-    <p>
-      This app helps you understand patterns in your health and lifestyle over time.
-      Track anything — from pain and stiffness to exercise, sleep, or medication.
-      Add your own questions below to customise your daily log.
-    </p>
-  </section>
+    <section class="intro-section">
+      <h2>New here, or want to add something new to track?</h2>
+      <p>
+        This app helps you understand patterns in your health and lifestyle over time.
+        Track anything — from pain and stiffness to exercise, sleep, or medication.
+        Add your own questions below to customise your daily log.
+      </p>
+    </section>
 
-  <!-- ============ ADD / EDIT QUESTIONS FORM ============ -->
-  <form id="questionForm">
-    <label>
-      What do you want to track? Each item you add will appear in your daily log form.
-      <input type="text" id="questionText" required>
-    </label>
+    <!--
+      NOTE TO SELF:
+      This form supports ADD + EDIT mode.
+      - js/index.js swaps title/button text when editingId is set.
+      - Some inputs (tags + scale) are optional, but are helpful for later filtering & charting.
+    -->
+    <form id="questionForm">
+      <h2 id="questionFormTitle">Add a Question</h2>
 
-    <label>
-      Choose how you'll answer:
-      <select id="questionType" required>
-        <option value="boolean">Yes / No</option>
-        <option value="number">Number (e.g. 1–10)</option>
-        <option value="text">Short text</option>
-        <option value="date">Date</option>
-        <option value="select">Select (choose from options)</option>
-      </select>
-    </label>
-
-    <div id="optionsContainer" style="display:none;">
       <label>
-        List your options (comma-separated):
-        <input type="text" id="questionOptions" placeholder="e.g. Morning, Afternoon, Evening">
+        What do you want to track? Each item you add will appear in your daily log form.
+        <input type="text" id="questionText" required />
       </label>
-    </div>
 
-    <button type="submit">Add to Tracker</button>
-  </form>
+      <label>
+        Tags (optional, comma-separated — helps group questions later):
+        <input
+          type="text"
+          id="questionTags"
+          placeholder="e.g. Morning, Medication, Sleep"
+        />
+      </label>
 
-  <h2>Current Questions</h2>
-  <ul id="questionList"></ul>
+      <label>
+        Choose how you'll answer:
+        <select id="questionType" required>
+          <option value="boolean">Yes / No</option>
+          <option value="number">Number (e.g. 1–10)</option>
+          <option value="text">Short text</option>
+          <option value="date">Date</option>
+          <option value="select">Select (choose from options)</option>
+        </select>
+      </label>
 
-  <!-- ============ CLEAN, PROFESSIONAL BUTTON BLOCK ============ -->
-  <div class="index-actions">
-    <button id="deleteAllQuestions" class="danger">Clear All Tracked Questions</button>
-    <button id="deleteAllData" class="danger">Clear All Recorded Entries</button>
-    <button id="goTrack" class="primary">Start Logging</button>
-  </div>
+      <!--
+        NOTE TO SELF:
+        Only shown when questionType === "select".
+        Options are stored as a string list split by commas.
+      -->
+      <div id="optionsContainer" style="display:none;">
+        <label>
+          List your options (comma-separated):
+          <input
+            type="text"
+            id="questionOptions"
+            placeholder="e.g. Morning, Afternoon, Evening"
+          />
+        </label>
+      </div>
 
-  <!-- ============ SECURITY SETTINGS ============ -->
-  <h2>Security Settings</h2>
+      <!--
+        NOTE TO SELF:
+        Only shown when questionType === "number".
+        Scale is optional, but makes data more meaningful (e.g. pain 0–10).
+      -->
+      <div id="scaleContainer" style="display:none;">
+        <label>
+          Number scale (optional):
+          <div class="scale-grid">
+            <input type="number" id="questionMin" placeholder="min (e.g. 0)" />
+            <input type="number" id="questionMax" placeholder="max (e.g. 10)" />
+            <input
+              type="number"
+              id="questionStep"
+              placeholder="step (e.g. 1)"
+              step="0.1"
+            />
+          </div>
+        </label>
+        <p class="help-text">Tip: for pain you might use 0–10. For mood you might use 1–5.</p>
+      </div>
 
-  <div class="settings-card">
-    <p>Manage your PIN lock for this device.</p>
-    <button onclick="window.location.href='pin-lock.html'">
-      Set PIN
-    </button>
-    <button onclick="window.location.href='pin-lock.html?mode=change'">
-      Change PIN
-    </button>
-    <button
-      class="danger"
-      onclick="window.location.href='pin-lock.html?mode=remove'">
-      Remove PIN
-    </button>
-  </div>
+      <div class="row-actions">
+        <button type="submit" id="questionSubmit">Add to Tracker</button>
+        <button type="button" id="cancelEdit" class="secondary hidden">Cancel edit</button>
+      </div>
+    </form>
 
-  <!-- ============ BOTTOM NAVIGATION ============ -->
-  <nav class="bottom-nav">
-    <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
-    <button data-page="track" onclick="window.location.href='track.html'">Track</button>
-    <button data-page="view" onclick="window.location.href='view.html'">View</button>
+    <section>
+      <h2>Current Questions</h2>
+      <ul id="questionList"></ul>
+    </section>
+
+    <section>
+      <h2>Archived Questions</h2>
+      <p class="help-text">
+        Archived questions won’t show on the daily form, but their past data stays in your records.
+      </p>
+      <ul id="archivedQuestionList"></ul>
+    </section>
+
+    <!--
+      NOTE TO SELF:
+      These are the "danger zone" controls.
+      - Clear questions also clears entries (because questions define the structure).
+      - Clear entries keeps questions.
+    -->
+    <section class="index-actions" aria-label="Data controls">
+      <button id="deleteAllQuestions" class="danger">Clear All Tracked Questions</button>
+      <button id="deleteAllData" class="danger">Clear All Recorded Entries</button>
+      <button id="goTrack" class="primary">Start Logging</button>
+    </section>
+
+    <!--
+      NOTE TO SELF:
+      PIN lock UI. I kept the buttons as regular buttons but moved navigation into JS below
+      to avoid inline onclick handlers (cleaner + easier to maintain).
+    -->
+    <section aria-label="Security settings">
+      <h2>Security Settings</h2>
+      <div class="settings-card">
+        <p>Manage your PIN lock for this device.</p>
+
+        <div class="row-actions">
+          <button type="button" id="setPinBtn">Set PIN</button>
+          <button type="button" id="changePinBtn">Change PIN</button>
+          <button type="button" id="removePinBtn" class="danger">Remove PIN</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!--
+    NOTE TO SELF:
+    Bottom navigation is present on every page for quick access.
+    I removed inline onclicks for cleanliness and handle clicks in the small script below.
+  -->
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button type="button" data-href="index.html" data-page="index">Setup</button>
+    <button type="button" data-href="track.html" data-page="track">Track</button>
+    <button type="button" data-href="view.html" data-page="view">View</button>
   </nav>
 
   <footer style="text-align:center; margin-top:3rem; font-size:0.85rem; color:#888;">
     © <span id="year"></span> The Idiom Lab
   </footer>
 
+  <!--
+    NOTE TO SELF:
+    Small "page glue" scripts that are not worth their own file:
+    - Year in footer
+    - Bottom-nav active highlight + click routing
+    - Security buttons routing
+    Keep these tiny and predictable.
+  -->
   <script>
+    // Footer year
     document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
 
-  <script src="main.js"></script>
-
-  <script>
-    // Highlight the active bottom-nav button
-    const current = window.location.pathname.split("/").pop().split(".")[0];
+    // Bottom nav routing + active state
+    const currentPage = window.location.pathname.split("/").pop().split(".")[0];
     document.querySelectorAll(".bottom-nav button").forEach(btn => {
-      if (btn.dataset.page === current) {
+      btn.addEventListener("click", () => {
+        const href = btn.dataset.href;
+        if (href) window.location.href = href;
+      });
+
+      if (btn.dataset.page === currentPage) {
         btn.classList.add("active");
       }
     });
+
+    // Security button routing (keeps HTML cleaner than inline onclick)
+    const setPinBtn = document.getElementById("setPinBtn");
+    const changePinBtn = document.getElementById("changePinBtn");
+    const removePinBtn = document.getElementById("removePinBtn");
+
+    setPinBtn?.addEventListener("click", () => (window.location.href = "pin-lock.html"));
+    changePinBtn?.addEventListener("click", () => (window.location.href = "pin-lock.html?mode=change"));
+    removePinBtn?.addEventListener("click", () => (window.location.href = "pin-lock.html?mode=remove"));
   </script>
 
+  <!--
+    NOTE TO SELF:
+    This is the page-specific logic for index.html using ES Modules.
+    Replace your old <script src="main.js"> with this.
+    (Requires running via a local server, not file://)
+  -->
+  <script type="module" src="js/index.js"></script>
 </body>
 </html>

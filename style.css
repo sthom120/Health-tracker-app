@@ -1,557 +1,776 @@
 /* ============================================================
-   PERSONAL HEALTH TRACKER – OPTION A (Refined Warm Theme)
-   Cleaned, merged, de-duplicated, consistent & polished
+   PERSONAL HEALTH TRACKER – STYLE.CSS (Palette Refresh)
+   Palette:
+   - Clay:  #CD8B75
+   - Cream: #EFE7C2
+   - Gold:  #DEC87A
+   - Sage:  #82A572
+   - Ink:   #566391
+
+   NOTE TO SELF:
+   This file is organised top → bottom by:
+   1) Reset + base layout
+   2) Design tokens
+   3) Typography
+   4) Global components (cards, inputs, buttons)
+   5) Page-specific sections (tables, modals, pin, nav)
+   6) Responsive rules
    ============================================================ */
 
-/* ------------------------------------------------------------
-   RESET & BASE STRUCTURE
------------------------------------------------------------- */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  font-size: 16px;
-}
-
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(
-    to bottom right,
-    #fdf6ec,
-    #f3ede4
-  );
-  color: #2f3b3a;
-  line-height: 1.6;
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 2rem 1rem 4rem; /* bottom padding for nav */
-}
-
-input, select, textarea, button {
-  font-size: 1rem;
-}
 
 /* ------------------------------------------------------------
-   DESIGN TOKENS
+   0) RESET
 ------------------------------------------------------------ */
-:root {
-  --teal: #2a9d8f;
-  --sage: #b8d8ba;
-  --sand: #e9c46a;
-  --rose: #f4a261;
-  --rust: #e76f51;
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-  --text: #2f3b3a;
-  --text-muted: #6b756f;
+html { font-size: 16px; }
 
-  --card-bg: #ffffff;
-  --card-border: rgba(0,0,0,0.06);
-  --shadow: 0 4px 14px rgba(0,0,0,0.06);
-  --shadow-soft: 0 6px 18px rgba(0,0,0,0.07);
-  --shadow-subtle: 0 2px 8px rgba(0,0,0,0.05);
+img { max-width: 100%; display: block; }
 
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
+button, input, select, textarea { font: inherit; }
+
+:focus-visible {
+  outline: 3px solid rgba(86, 99, 145, 0.35); /* Ink glow */
+  outline-offset: 2px;
+}
+
+
+/* ------------------------------------------------------------
+   1) DESIGN TOKENS (Theme Variables)
+------------------------------------------------------------ */
+:root{
+  /* Brand palette */
+  --clay: #CD8B75;
+  --cream: #EFE7C2;
+  --gold: #DEC87A;
+  --sage: #82A572;
+  --ink:  #566391;
+
+  /* Neutrals (modern UI essentials) */
+  --bg: #fbfaf6;
+  --bg-gradient-1: #fdfbf4;
+  --bg-gradient-2: #f6f3ea;
+
+  --text: #1d2324;
+  --muted: rgba(29,35,36,0.68);
+  --border: rgba(29,35,36,0.12);
+  --border-strong: rgba(29,35,36,0.18);
+
+  --card: rgba(255,255,255,0.9);
+
+  /* Shadows (soft and modern) */
+  --shadow-xs: 0 1px 6px rgba(0,0,0,0.06);
+  --shadow-sm: 0 4px 14px rgba(0,0,0,0.08);
+  --shadow-md: 0 10px 28px rgba(0,0,0,0.12);
+
+  /* Radii */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
   --r-pill: 999px;
+
+  /* Spacing helpers */
+  --gutter: 1rem;
+  --maxw: 960px;
+
+  /* Button colors */
+  --primary: var(--ink);
+  --primary-hover: #48507d;
+  --secondary: rgba(86,99,145,0.12);
+  --secondary-hover: rgba(86,99,145,0.18);
+  --danger: #b94e4e;
+  --danger-hover: #a64444;
+
+  /* Accents */
+  --accent-soft: rgba(205,139,117,0.20); /* clay */
+  --accent-soft-2: rgba(130,165,114,0.20); /* sage */
 }
+
 
 /* ------------------------------------------------------------
-   TYPOGRAPHY
+   2) BASE LAYOUT
 ------------------------------------------------------------ */
-h1, h2 {
-  color: #305b4f;
+body{
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text);
+  line-height: 1.6;
+
+  background: radial-gradient(circle at top, var(--bg-gradient-1), var(--bg-gradient-2) 70%);
+  max-width: var(--maxw);
+  margin: 0 auto;
+
+  /* NOTE TO SELF:
+     Bottom padding makes space for the fixed bottom-nav. */
+  padding: 2rem var(--gutter) 5rem;
 }
 
-h1 {
+
+/* ------------------------------------------------------------
+   3) TYPOGRAPHY
+------------------------------------------------------------ */
+h1, h2, h3{
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+h1{
   text-align: center;
-  font-size: 2rem;
+  font-size: 1.9rem;
+  line-height: 1.2;
   margin-bottom: 0.5rem;
 }
 
-h2 {
+h2{
   text-align: center;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   margin: 1.5rem 0 1rem;
 }
 
-p {
+p{
   text-align: center;
   margin-bottom: 1rem;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
-.intro-text {
+.intro-text{
   font-size: 1rem;
   margin-bottom: 1.2rem;
 }
 
 /* Greeting */
-#greetingText {
+#greetingText{
   text-align: center;
-  margin: 1rem 0 1.5rem;
-  color: var(--teal);
-  font-size: 1.8rem;
+  margin: 1rem 0 1.25rem;
+  color: var(--ink);
+  font-size: 1.7rem;
   font-weight: 700;
 }
 
-#greetingSub {
+#greetingSub{
   font-size: 1rem;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
+
 /* ------------------------------------------------------------
-   HEADER
+   4) HEADER
 ------------------------------------------------------------ */
-#appHeader {
+#appHeader{
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-bottom: 0.75rem;
 }
 
-.logo-row {
+.logo-row{
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.app-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: var(--shadow-subtle);
+.app-logo{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.9);
+  box-shadow: var(--shadow-xs);
   object-fit: contain;
+  border: 1px solid var(--border);
 }
 
-#appTitle {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--teal);
+#appTitle{
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--ink);
 }
 
-.tagline {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+.tagline{
+  font-size: 0.92rem;
+  color: var(--muted);
   font-style: italic;
   margin-top: 0.2rem;
 }
 
+
 /* ------------------------------------------------------------
-   INTRO SECTIONS
+   5) COMMON CARD SURFACE
+   (used by intro sections, forms, entry cards, etc.)
 ------------------------------------------------------------ */
-.intro-block {
-  text-align: center;
-  margin-bottom: 1.2rem;
-}
-
-.intro-block .primary {
-  background: linear-gradient(135deg, var(--teal), #3bb9a5);
-  color: #fff;
-  font-weight: 600;
-  padding: 0.85rem 1.75rem;
-  border-radius: var(--r-pill);
-  border: none;
-  box-shadow: var(--shadow-subtle);
-}
-
-/* Card section */
-.intro-section {
-  background: var(--card-bg);
-  padding: 1.5rem;
+.intro-section,
+form,
+.entry-card,
+#questionList li,
+.date-card,
+.pin-container,
+.modal-card{
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-subtle);
-  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: blur(6px); /* NOTE: looks great on supported browsers */
+}
+
+
+/* ------------------------------------------------------------
+   6) INTRO SECTIONS
+------------------------------------------------------------ */
+.intro-block{
+  text-align: center;
+  margin-bottom: 1.1rem;
+}
+
+.intro-section{
+  padding: 1.5rem;
   margin-bottom: 1.6rem;
 }
 
-.intro-section p {
+.intro-section p{
   text-align: left;
   color: var(--text);
 }
 
+
 /* ------------------------------------------------------------
-   FORMS
+   7) FORMS + INPUTS
 ------------------------------------------------------------ */
-form {
-  background: var(--card-bg);
-  padding: 1.75rem;
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-subtle);
-  border: 1px solid var(--card-border);
+form{
+  padding: 1.6rem;
   display: flex;
   flex-direction: column;
-  gap: 1.3rem;
+  gap: 1.15rem;
   margin-bottom: 2rem;
 }
 
-label {
+label{
   display: flex;
   flex-direction: column;
-  font-weight: 600;
-  gap: 0.4rem;
+  font-weight: 650;
+  gap: 0.45rem;
   color: var(--text);
 }
 
-input, select, textarea {
-  border: 1px solid #d0d7d3;
+input, select, textarea{
+  border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  padding: 0.65rem 0.85rem;
-  background: #fff;
-  transition: 0.2s ease;
+  padding: 0.7rem 0.9rem;
+  background: rgba(255,255,255,0.95);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-input:focus, select:focus, textarea:focus {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(42,157,143,.13);
-  background: #fefefe;
+input:focus, select:focus, textarea:focus{
+  border-color: rgba(86,99,145,0.55); /* ink */
+  box-shadow: 0 0 0 3px rgba(86,99,145,0.18);
 }
+
+.help-text{
+  margin-top: 0.35rem;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
 
 /* ------------------------------------------------------------
-   DAILY ENTRY CARDS
+   8) DAILY ENTRY CARDS
 ------------------------------------------------------------ */
-.entry-card {
-  background: var(--card-bg);
-  padding: 1.25rem 1.4rem;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--shadow-subtle);
+.entry-card{
+  padding: 1.15rem 1.25rem;
   margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  transition: 0.18s ease;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 
-.entry-card:hover {
+.entry-card:hover{
   transform: translateY(-2px);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-sm);
 }
 
-.entry-card .multi-select-group {
+.entry-card .multi-select-group{
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 0.55rem;
 }
 
-.checkbox-option {
-  display: flex;
-  background: #f4f6f2;
-  padding: 0.45rem 0.9rem;
-  border-radius: var(--r-pill);
-  border: 1px solid #d9e0d5;
-  font-size: 0.95rem;
+/* Checkbox pill */
+.checkbox-option{
+  display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
+
+  background: rgba(239,231,194,0.55); /* cream */
+  border: 1px solid rgba(222,200,122,0.45); /* gold */
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--r-pill);
+
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
-.checkbox-option:hover {
-  background: #e8f1e5;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+.checkbox-option:hover{
+  background: rgba(239,231,194,0.80);
+  box-shadow: var(--shadow-xs);
 }
 
-.checkbox-option input {
-  margin-right: 0.4rem;
+.checkbox-option input{
+  margin: 0;
 }
+
 
 /* ------------------------------------------------------------
-   QUESTION LIST
+   9) QUESTION LISTS
 ------------------------------------------------------------ */
-#questionList {
+#questionList,
+#archivedQuestionList,
+.modal-list{
   list-style: none;
-  margin-bottom: 2rem;
+  padding: 0;
+  margin: 0 0 2rem;
 }
 
-#questionList li {
-  background: var(--card-bg);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow-subtle);
-  border: 1px solid var(--card-border);
-  padding: 0.8rem 1rem;
+#questionList li,
+#archivedQuestionList li{
+  padding: 0.85rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
 }
 
+.question-actions{
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+
 /* ------------------------------------------------------------
-   BUTTONS
+   10) BUTTONS (consistent system)
 ------------------------------------------------------------ */
-button {
-  background: var(--teal);
-  color: #fff;
-  font-weight: 600;
-  padding: 0.8rem 1.3rem;
-  border-radius: var(--r-pill);
+button{
   border: none;
   cursor: pointer;
-  transition: 0.18s ease;
-  box-shadow: var(--shadow-subtle);
+  border-radius: var(--r-pill);
+  padding: 0.78rem 1.15rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
-button:hover {
-  background: #248576;
+button:hover{
   transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
-button.secondary {
-  background: #adb4af;
+button:active{
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
 }
 
-button.danger {
-  background: var(--rust);
+/* Primary (default) */
+button,
+button.primary{
+  background: var(--primary);
+  color: #fff;
+}
+
+button:hover,
+button.primary:hover{
+  background: var(--primary-hover);
+}
+
+/* Secondary */
+button.secondary{
+  background: var(--secondary);
+  color: var(--ink);
+}
+
+button.secondary:hover{
+  background: var(--secondary-hover);
+}
+
+/* Danger */
+button.danger{
+  background: var(--danger);
+  color: #fff;
+}
+
+button.danger:hover{
+  background: var(--danger-hover);
+}
+
+/* Smaller control buttons (optional, matches your existing classes) */
+.small-edit,
+.small-delete,
+.small-delete-btn,
+.reorder-btn{
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--r-pill);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.small-edit{
+  background: rgba(130,165,114,0.22); /* sage */
+  color: #1f2a22;
+}
+
+.small-edit:hover{
+  background: rgba(130,165,114,0.32);
+}
+
+.small-delete,
+.small-delete-btn{
+  background: rgba(205,139,117,0.22); /* clay */
+  color: #3a1f1a;
+}
+
+.small-delete:hover,
+.small-delete-btn:hover{
+  background: rgba(205,139,117,0.32);
+}
+
+.reorder-btn{
+  background: rgba(86,99,145,0.14);
+  color: var(--ink);
+}
+
+.reorder-btn:hover{
+  background: rgba(86,99,145,0.22);
 }
 
 /* Success toast */
-#saveMessage {
-  background: #e1f4e1;
+#saveMessage{
+  background: rgba(130,165,114,0.18); /* sage */
+  border: 1px solid rgba(130,165,114,0.35);
   padding: 0.75rem;
   border-radius: var(--r-md);
-  color: #225b28;
-  font-weight: 600;
+  color: #1f3b28;
+  font-weight: 700;
   margin-top: 1rem;
 }
 
-.hidden {
-  display: none !important;
-}
+.hidden{ display: none !important; }
+
 
 /* ------------------------------------------------------------
-   DATE CARD
+   11) LAYOUT HELPERS
 ------------------------------------------------------------ */
-.date-card {
-  background: #f5f7f3;
-  border-left: 5px solid var(--teal);
-  border-radius: var(--r-lg);
-  padding: 1.1rem 1.25rem;
-  margin-bottom: 1.3rem;
-  border: 1px solid #d7ddcf;
-  box-shadow: var(--shadow-subtle);
+.row-actions{
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.6rem;
 }
 
-/* ------------------------------------------------------------
-   INDEX BUTTON SPACING FIX
------------------------------------------------------------- */
-.index-actions {
+.scale-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.track-actions{
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0.7rem auto 1.2rem;
+  max-width: 700px;
+  padding: 0 1.25rem;
+}
+
+.index-actions{
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.index-actions button {
-  width: 100%;
-}
+.index-actions button{ width: 100%; }
+
 
 /* ------------------------------------------------------------
-   TABLES
+   12) DATE CARD
 ------------------------------------------------------------ */
-.table-container {
+.date-card{
+  padding: 1.05rem 1.2rem;
+  margin-bottom: 1.25rem;
+  border-left: 6px solid var(--sage);
+  background: rgba(239,231,194,0.35); /* cream */
+}
+
+
+/* ------------------------------------------------------------
+   13) TABLES
+------------------------------------------------------------ */
+.table-container{
   overflow-x: auto;
   margin-bottom: 2rem;
 }
 
-table {
+table{
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: rgba(255,255,255,0.92);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-subtle);
   overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
 }
 
-th, td {
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid #eef0e9;
+th, td{
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
   font-size: 0.95rem;
+  text-align: left;
+  vertical-align: top;
 }
 
-th {
-  background: #f4f5ef;
-  color: #485046;
-  font-weight: 600;
+th{
+  background: rgba(239,231,194,0.65); /* cream */
+  color: rgba(29,35,36,0.82);
+  font-weight: 800;
 }
+
+tr:hover td{
+  background: rgba(222,200,122,0.10); /* gold glow */
+}
+
 
 /* ------------------------------------------------------------
-   CHART
+   14) CHART
 ------------------------------------------------------------ */
-canvas {
+canvas{
   width: 100%;
-  background: #fff;
+  background: rgba(255,255,255,0.92);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-subtle);
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
   margin-top: 1rem;
 }
 
-/* ------------------------------------------------------------
-   PIN LOCK SCREEN
------------------------------------------------------------- */
-.pin-body {
-  background: radial-gradient(circle at top, #fdf6ec, #f3ede4 80%);
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pin-container {
-  width: 100%;
-  max-width: 380px;
-  background: #ffffffee;
-  padding: 2rem 1.5rem;
-  border-radius: 22px;
-  box-shadow: var(--shadow-soft);
-  text-align: center;
-}
-
-.pin-title {
-  font-size: 1.45rem;
-  color: var(--teal);
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-}
-
-.pin-subtitle {
-  font-size: 1rem;
-  opacity: 0.85;
-  margin-bottom: 1.7rem;
-}
-
-/* PIN dots */
-.pin-dots {
-  display: flex;
-  justify-content: center;
-  gap: 0.7rem;
-  margin-bottom: 1.8rem;
-}
-
-.pin-dots .dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid var(--teal);
-}
-
-.pin-dots .dot.filled {
-  background: var(--teal);
-}
-
-/* Keypad layout */
-.pin-keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem 1.2rem;
-  margin-bottom: 1rem;
-}
-
-.key, .delete-key {
-  background: #f5f0e7;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: #4b5b55;
-  border: none;
-  box-shadow: var(--shadow-subtle);
-  transition: 0.12s ease;
-}
-
-.key:active, .delete-key:active {
-  transform: scale(0.92);
-  background: #e9dfcf;
-}
-
-.spacer {
-  visibility: hidden;
-}
 
 /* ------------------------------------------------------------
-   PIN SETTINGS MODAL
+   15) MODAL (question editing)
 ------------------------------------------------------------ */
-.pin-modal {
+.modal-overlay{
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.45);
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 1rem;
+  z-index: 50;
 }
 
-.pin-modal-content {
-  background: #ffffff;
-  padding: 2rem 1.5rem;
-  border-radius: 18px;
-  box-shadow: 0 8px 26px rgba(0,0,0,0.14);
-  max-width: 380px;
-  width: 90%;
+.modal-card{
+  width: min(720px, 96vw);
+  max-height: 86vh;
+  overflow: auto;
+  padding: 1.2rem 1.2rem 1rem;
+  box-shadow: var(--shadow-md);
 }
 
-.pin-modal-content input {
-  padding: 0.8rem;
-  border-radius: var(--r-md);
-  border: 1px solid #cfcfcf;
-  font-size: 1.1rem;
-  text-align: center;
-  letter-spacing: 0.18em;
-  margin-bottom: 0.6rem;
+.modal-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
 }
+
+.modal-close{
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.25rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.modal-close:hover{
+  background: rgba(86,99,145,0.12);
+  transform: none;
+}
+
+.modal-form{
+  border: 1px solid rgba(86,99,145,0.14);
+  border-radius: var(--r-lg);
+  padding: 0.9rem;
+  margin-bottom: 1rem;
+  background: rgba(255,255,255,0.85);
+}
+
+.modal-subtitle{
+  margin-top: 0.2rem;
+}
+
+.modal-list li{
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
 
 /* ------------------------------------------------------------
-   BOTTOM NAVIGATION
+   16) PIN LOCK SCREEN
 ------------------------------------------------------------ */
-.bottom-nav {
+.pin-body{
+  background: radial-gradient(circle at top, var(--bg-gradient-1), var(--bg-gradient-2) 80%);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.pin-container{
+  width: 100%;
+  max-width: 380px;
+  padding: 2rem 1.5rem;
+  border-radius: var(--r-xl);
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.pin-title{
+  font-size: 1.45rem;
+  color: var(--ink);
+  font-weight: 900;
+  margin-bottom: 0.35rem;
+}
+
+.pin-subtitle{
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-bottom: 1.6rem;
+}
+
+/* PIN dots */
+.pin-dots{
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+  margin-bottom: 1.7rem;
+}
+
+.pin-dots .dot{
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(86,99,145,0.65);
+}
+
+.pin-dots .dot.filled{
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* Keypad layout */
+.pin-keypad{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem 1.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.key, .delete-key{
+  background: rgba(239,231,194,0.75); /* cream */
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: rgba(29,35,36,0.85);
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.key:hover, .delete-key:hover{
+  background: rgba(239,231,194,0.92);
+}
+
+.key:active, .delete-key:active{
+  transform: scale(0.94);
+  background: rgba(222,200,122,0.55); /* gold */
+}
+
+.spacer{ visibility: hidden; }
+
+/* Shake animation */
+.pin-container.shake{ animation: shake 0.3s; }
+
+@keyframes shake{
+  0%, 100%{ transform: translateX(0); }
+  25%{ transform: translateX(-4px); }
+  75%{ transform: translateX(4px); }
+}
+
+
+/* ------------------------------------------------------------
+   17) BOTTOM NAVIGATION
+------------------------------------------------------------ */
+.bottom-nav{
   position: fixed;
   bottom: 0;
   left: 0;
-  background: white;
   width: 100%;
-  border-top: 1px solid #ddd;
+
+  background: rgba(255,255,255,0.92);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+
   display: flex;
   justify-content: space-around;
-  padding: 0.4rem 0;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+  padding: 0.55rem 0.6rem;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
 }
 
-.bottom-nav button {
+.bottom-nav button{
   background: transparent;
-  color: #555;
+  color: rgba(29,35,36,0.72);
   border-radius: var(--r-pill);
-  padding: 0.6rem 0.8rem;
+  padding: 0.55rem 0.85rem;
+  box-shadow: none;
+  font-weight: 800;
 }
 
-.bottom-nav button.active {
-  background: var(--teal);
-  color: #fff;
-  font-weight: 700;
+.bottom-nav button:hover{
+  background: rgba(86,99,145,0.10);
+  transform: none;
 }
+
+.bottom-nav button.active{
+  background: rgba(86,99,145,0.14);
+  color: var(--ink);
+  border: 1px solid rgba(86,99,145,0.25);
+}
+
 
 /* ------------------------------------------------------------
-   RESPONSIVE IMPROVEMENTS
+   18) RESPONSIVE IMPROVEMENTS
 ------------------------------------------------------------ */
-@media (max-width: 600px) {
+@media (max-width: 600px){
+  body{ padding: 1.5rem 0.9rem 5.25rem; }
 
-  .entry-card {
-    padding: 1.1rem;
-  }
+  .entry-card{ padding: 1.05rem; }
 
-  button {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
+  /* Buttons stack nicely on small screens */
+  .row-actions button,
+  button{ width: 100%; }
 
-  table {
-    font-size: 0.9rem;
-  }
+  table{ font-size: 0.92rem; }
 
-  .pin-container {
-    padding: 1.75rem 1.25rem;
-  }
+  .pin-container{ padding: 1.75rem 1.25rem; }
 
-  .key, .delete-key {
+  .key, .delete-key{
     width: 56px;
     height: 56px;
   }

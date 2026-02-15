@@ -1,0 +1,153 @@
+// js/storage.js
+// Shared helpers: storage, normalisation, ids, dates, small utilities.
+
+export const STORAGE_KEYS = {
+  QUESTIONS: "questions",
+  ENTRIES: "entries",
+};
+
+export function safeJSONParse(raw, fallback) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
+export function nowISO() {
+  return new Date().toISOString();
+}
+
+export function todayISODate() {
+  return new Date().toISOString().split("T")[0];
+}
+
+// Safer parse for YYYY-MM-DD to avoid timezone issues
+export function parseLocalDate(yyyyMMdd) {
+  if (!yyyyMMdd || typeof yyyyMMdd !== "string") return null;
+  const [y, m, d] = yyyyMMdd.split("-").map(n => parseInt(n, 10));
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+
+export function createId(prefix = "id") {
+  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+export function normaliseTags(tags) {
+  if (!tags) return [];
+  if (Array.isArray(tags)) {
+    return tags.map(t => String(t).trim()).filter(Boolean);
+  }
+  return String(tags)
+    .split(",")
+    .map(t => t.trim())
+    .filter(Boolean);
+}
+
+export function normaliseScale(scale) {
+  if (!scale || typeof scale !== "object") return null;
+  const min = scale.min ?? null;
+  const max = scale.max ?? null;
+  const step = scale.step ?? null;
+  const anySet = [min, max, step].some(v => v !== null && v !== "" && v !== undefined);
+  if (!anySet) return null;
+  return {
+    min: min === "" ? null : (min !== null ? Number(min) : null),
+    max: max === "" ? null : (max !== null ? Number(max) : null),
+    step: step === "" ? null : (step !== null ? Number(step) : null),
+  };
+}
+
+export function normaliseQuestion(q) {
+  const nq = { ...(q || {}) };
+  if (!nq.id) nq.id = createId("q");
+  nq.text = String(nq.text ?? "").trim();
+  nq.type = nq.type || "text";
+
+  if (nq.type === "select") {
+    nq.options = Array.isArray(nq.options)
+      ? nq.options.map(o => String(o).trim()).filter(Boolean)
+      : [];
+  } else {
+    if (Array.isArray(nq.options)) nq.options = nq.options.map(o => String(o).trim()).filter(Boolean);
+  }
+
+  nq.tags = normaliseTags(nq.tags);
+  nq.archived = Boolean(nq.archived);
+  nq.version = Number.isFinite(Number(nq.version)) ? Number(nq.version) : 1;
+  nq.scale = normaliseScale(nq.scale);
+
+  if (nq.units !== undefined && nq.units !== null) nq.units = String(nq.units);
+
+  return nq;
+}
+
+export function saveQuestions(questions) {
+  localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
+}
+
+export function loadQuestions() {
+  const raw = safeJSONParse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || "[]", []);
+  const norm = raw.map(normaliseQuestion);
+  localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(norm));
+  return norm;
+}
+
+export function normaliseEntry(e) {
+  const ne = { ...(e || {}) };
+  if (!ne.id) ne.id = createId("e");
+  ne.date = ne.date || todayISODate();
+  ne.responses = (ne.responses && typeof ne.responses === "object") ? ne.responses : {};
+  ne.createdAt = ne.createdAt || nowISO();
+  ne.updatedAt = ne.updatedAt || nowISO();
+  ne.meta = (ne.meta && typeof ne.meta === "object") ? ne.meta : {};
+  return ne;
+}
+
+export function saveEntries(entries) {
+  localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(entries));
+}
+
+export function loadEntries() {
+  const raw = safeJSONParse(localStorage.getItem(STORAGE_KEYS.ENTRIES) || "[]", []);
+  const norm = raw.map(normaliseEntry);
+  localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(norm));
+  return norm;
+}
+
+export function needsVersionBump(oldQ, newQ) {
+  if (!oldQ) return false;
+
+  if ((oldQ.type || "text") !== (newQ.type || "text")) return true;
+
+  const oldType = oldQ.type || "text";
+  if (oldType === "select") {
+    const a = (Array.isArray(oldQ.options) ? oldQ.options : []).join("||");
+    const b = (Array.isArray(newQ.options) ? newQ.options : []).join("||");
+    if (a !== b) return true;
+  }
+
+  if (oldType === "number") {
+    const aS = normaliseScale(oldQ.scale);
+    const bS = normaliseScale(newQ.scale);
+    const a = aS ? `${aS.min}|${aS.max}|${aS.step}` : "null";
+    const b = bS ? `${bS.min}|${bS.max}|${bS.step}` : "null";
+    if (a !== b) return true;
+  }
+
+  return false;
+}
+
+export function formatQuestionLabel(q, { includeArchivedTag = true } = {}) {
+  let label = q.text || "(untitled)";
+  if (includeArchivedTag && q.archived) label += " (archived)";
+  return label;
+}
+
+export function isFilledValue(v) {
+  if (v === null || v === undefined) return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "string") return v.trim() !== "";
+  return true;
+}

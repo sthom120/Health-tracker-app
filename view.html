@@ -1,30 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- 🔐 Redirect to PIN lock if session isn't unlocked -->
+  <!--
+    NOTE TO SELF:
+    Redirect BEFORE render to prevent protected content flashing.
+  -->
   <script>
     if (!sessionStorage.getItem("unlocked")) {
-      window.location.href = "pin-lock.html";
+      window.location.replace("pin-lock.html");
     }
   </script>
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>View Data</title>
 
-  <link rel="stylesheet" href="style.css">
+  <!-- iOS PWA support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!--
+    NOTE TO SELF:
+    Chart.js must load before js/view.js runs, because view.js (via charts.js)
+    uses the global Chart constructor.
+    Keeping it in head is fine; alternatively you could add "defer".
+  -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
   <header id="appHeader">
     <div class="logo-row">
-      <a href="index.html">
-        <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
+      <a href="index.html" aria-label="Go to setup">
+        <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo" />
       </a>
       <div class="header-text">
         <h1 id="appTitle">Personal Health Tracker</h1>
@@ -33,77 +45,116 @@
     </div>
   </header>
 
-  <h1>Your Records</h1>
-  <p class="intro-text">
-    Review your entries and compare trends over time. Use the filters and chart to spot patterns.
-  </p>
+  <main>
+    <section class="intro-section">
+      <h1>Your Records</h1>
+      <p class="intro-text">
+        Review your entries and compare trends over time. Use the filters and chart to spot patterns.
+      </p>
+    </section>
 
-  <div class="table-container">
-    <table id="dataTable"></table>
-  </div>
+    <!--
+      NOTE TO SELF:
+      Timeframe filter belongs ABOVE the table logically,
+      but leaving it below is ok if your UI reads better that way.
+      Here I’m putting it first so users filter before they scroll.
+    -->
+    <section aria-label="Timeframe filter">
+      <h2>View Timeframe</h2>
+      <label for="timeframeSelect">Show data from:</label>
+      <select id="timeframeSelect">
+        <option value="all">All time</option>
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="180">Last 6 months</option>
+      </select>
+    </section>
 
-  <h2>View Timeframe</h2>
-  <label for="timeframeSelect">Show data from:</label>
-  <select id="timeframeSelect">
-    <option value="all">All time</option>
-    <option value="7">Last 7 days</option>
-    <option value="30">Last 30 days</option>
-    <option value="180">Last 6 months</option>
-  </select>
+    <section aria-label="Entries table">
+      <div class="table-container">
+        <table id="dataTable"></table>
+      </div>
+    </section>
 
-  <h2>Your Summary</h2>
-  <div id="summaryCards" class="summary-grid"></div>
+    <section aria-label="Summary">
+      <h2>Your Summary</h2>
+      <div id="summaryCards" class="summary-grid"></div>
+    </section>
 
-  <h2>Compare Two Factors Over Time</h2>
-  <p>Select any two questions to compare on the same chart (Date on the X-axis):</p>
+    <section aria-label="Comparison chart">
+      <h2>Compare Two Factors Over Time</h2>
+      <p>Select any two questions to compare on the same chart (Date on the X-axis):</p>
 
-  <label>First question:
-    <select id="factorA"></select>
-  </label>
-  <div id="optionsA" class="option-picker"></div>
+      <label>
+        First question:
+        <select id="factorA"></select>
+      </label>
+      <div id="optionsA" class="option-picker"></div>
 
-  <label>Second question:
-    <select id="factorB"></select>
-  </label>
-  <div id="optionsB" class="option-picker"></div>
+      <label>
+        Second question:
+        <select id="factorB"></select>
+      </label>
+      <div id="optionsB" class="option-picker"></div>
 
-  <button id="compareBtn">Plot Comparison</button>
-  <button id="clearChartBtn" class="secondary">Clear Chart</button>
+      <div class="row-actions">
+        <button id="compareBtn" type="button" class="primary">Plot Comparison</button>
+        <button id="clearChartBtn" type="button" class="secondary">Clear Chart</button>
+        <button id="backToSetupBtn" type="button" class="secondary">Back to Setup</button>
+      </div>
 
-  <canvas id="compareChart"></canvas>
+      <canvas id="compareChart"></canvas>
+    </section>
 
-  <h2>Export / Import Data</h2>
-  <button id="exportJSON">Download JSON</button>
-  <button id="exportCSV">Download CSV</button>
+    <section aria-label="Export and import">
+      <h2>Export / Import Data</h2>
 
-  <div style="margin-top: 1rem;">
-    <label for="importJSON">Import entries from JSON:</label>
-    <input type="file" id="importJSON" accept=".json,application/json">
-  </div>
+      <div class="row-actions">
+        <button id="exportJSON" type="button" class="primary">Download JSON</button>
+        <button id="exportCSV" type="button" class="secondary">Download CSV</button>
+      </div>
 
-  <button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
+      <div style="margin-top: 1rem;">
+        <label for="importJSON">Import entries from JSON:</label>
+        <input type="file" id="importJSON" accept=".json,application/json" />
+      </div>
+    </section>
+  </main>
 
-  <nav class="bottom-nav">
-    <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
-    <button data-page="track" onclick="window.location.href='track.html'">Track</button>
-    <button data-page="view" onclick="window.location.href='view.html'">View</button>
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button type="button" data-href="index.html" data-page="index">Setup</button>
+    <button type="button" data-href="track.html" data-page="track">Track</button>
+    <button type="button" data-href="view.html" data-page="view">View</button>
   </nav>
 
   <footer style="text-align:center; margin-top:3rem; font-size:0.85rem; color:#888;">
     © <span id="year"></span> The Idiom Lab
   </footer>
 
+  <!-- Tiny shared page glue: footer year + nav routing + back button -->
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-  <script src="main.js"></script>
-  <script>
-    const current = window.location.pathname.split("/").pop().split(".")[0];
+
+    const currentPage = window.location.pathname.split("/").pop().split(".")[0];
     document.querySelectorAll(".bottom-nav button").forEach(btn => {
-      if (btn.dataset.page === current) {
-        btn.classList.add("active");
-      }
+      btn.addEventListener("click", () => {
+        const href = btn.dataset.href;
+        if (href) window.location.href = href;
+      });
+
+      if (btn.dataset.page === currentPage) btn.classList.add("active");
+    });
+
+    document.getElementById("backToSetupBtn")?.addEventListener("click", () => {
+      window.location.href = "index.html";
     });
   </script>
+
+  <!--
+    NOTE TO SELF:
+    Page logic for view.html using ES Modules (replaces old main.js).
+    Must come after Chart.js is loaded.
+  -->
+  <script type="module" src="js/view.js"></script>
 </body>
 </html>

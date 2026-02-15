@@ -1,15 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Standard meta order -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Unlock Tracker</title>
 
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!--
+    NOTE TO SELF:
+    Keep CSS in head so the PIN screen doesn't "flash" unstyled.
+    Font is optional; if you decide to remove Google Fonts later,
+    the app still works fine.
+  -->
+  <link rel="stylesheet" href="style.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
 
-  <!-- Register service worker here too (in case user lands here first) -->
+  <!--
+    NOTE TO SELF:
+    Service worker registration:
+    - This ensures offline/PWA works even if the user first lands on pin-lock.html.
+    - "defer" isn't used here because this is a tiny script and doesn't touch DOM.
+    - If you ever hit caching issues while developing, unregister the SW in devtools.
+  -->
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
@@ -21,34 +37,59 @@
 </head>
 
 <body class="pin-body">
-  <div class="pin-container">
+  <!--
+    NOTE TO SELF:
+    PIN UI is deliberately minimal:
+    - no nav
+    - no other controls
+    This reduces the chance of users getting “stuck” or confused.
+  -->
+  <main class="pin-container" role="main">
     <h1 class="pin-title">🔒 Personal Health Tracker</h1>
     <p id="pinMessage" class="pin-subtitle">Enter your PIN</p>
 
-    <div class="pin-dots">
+    <!--
+      NOTE TO SELF:
+      The dot indicators are visual feedback only.
+      aria-hidden so screen readers don’t read “dot dot dot…”
+    -->
+    <div class="pin-dots" aria-hidden="true">
       <span class="dot" id="dot1"></span>
       <span class="dot" id="dot2"></span>
       <span class="dot" id="dot3"></span>
       <span class="dot" id="dot4"></span>
     </div>
 
-    <div class="pin-keypad">
-      <button class="key">1</button>
-      <button class="key">2</button>
-      <button class="key">3</button>
-      <button class="key">4</button>
-      <button class="key">5</button>
-      <button class="key">6</button>
-      <button class="key">7</button>
-      <button class="key">8</button>
-      <button class="key">9</button>
+    <!--
+      NOTE TO SELF:
+      Keypad buttons are type="button" so they never try to submit anything.
+      We also add aria-labels to make the keypad accessible.
+    -->
+    <div class="pin-keypad" role="group" aria-label="PIN keypad">
+      <button type="button" class="key" aria-label="1">1</button>
+      <button type="button" class="key" aria-label="2">2</button>
+      <button type="button" class="key" aria-label="3">3</button>
 
-      <div class="spacer"></div>
-      <button class="key">0</button>
-      <button class="delete-key">⌫</button>
+      <button type="button" class="key" aria-label="4">4</button>
+      <button type="button" class="key" aria-label="5">5</button>
+      <button type="button" class="key" aria-label="6">6</button>
+
+      <button type="button" class="key" aria-label="7">7</button>
+      <button type="button" class="key" aria-label="8">8</button>
+      <button type="button" class="key" aria-label="9">9</button>
+
+      <div class="spacer" aria-hidden="true"></div>
+
+      <button type="button" class="key" aria-label="0">0</button>
+      <button type="button" class="delete-key" aria-label="Delete">⌫</button>
     </div>
-  </div>
+  </main>
 
+  <!--
+    NOTE TO SELF:
+    PIN logic is kept in a dedicated file.
+    It runs after HTML loads, so it can safely query elements.
+  -->
   <script src="pin-lock.js"></script>
 </body>
 </html>

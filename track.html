@@ -1,29 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- 🔐 Redirect to PIN lock if session isn't unlocked -->
+  <!--
+    NOTE TO SELF:
+    Redirect BEFORE render to prevent protected content flashing.
+    Using replace() avoids adding to browser history.
+  -->
   <script>
     if (!sessionStorage.getItem("unlocked")) {
-      window.location.href = "pin-lock.html";
+      window.location.replace("pin-lock.html");
     }
   </script>
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <!-- Standard meta order -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Daily Tracker</title>
 
-  <link rel="stylesheet" href="style.css">
+  <!--
+    NOTE TO SELF:
+    iOS "Add to Home Screen" support (standalone mode).
+  -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
+  <!--
+    NOTE TO SELF:
+    Consistent header across pages.
+    Logo links back to setup, since setup is the "home" for configuration.
+  -->
   <header id="appHeader">
     <div class="logo-row">
-      <a href="index.html">
-        <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo">
+      <a href="index.html" aria-label="Go to setup">
+        <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo" />
       </a>
       <div class="header-text">
         <h1 id="appTitle">Personal Health Tracker</h1>
@@ -32,46 +48,164 @@
     </div>
   </header>
 
-  <section class="intro-section">
-    <p class="intro-text">
-      Record today’s data (or choose another date). Check or fill in the values that apply.
-    </p>
-  </section>
+  <main>
+    <section class="intro-section">
+      <p class="intro-text">
+        Record today’s data (or choose another date). Check or fill in the values that apply.
+      </p>
+    </section>
 
-  <div class="date-card">
-    <label for="entryDate">Date (required):</label>
-    <input type="date" id="entryDate" required>
-  </div>
+    <!--
+      NOTE TO SELF:
+      Date is saved with the entry and is used as the X-axis in charts.
+      track.js will auto-fill today's date, or the entry's date in edit mode.
+    -->
+    <section class="date-card" aria-label="Entry date">
+      <label for="entryDate">Date (required):</label>
+      <input type="date" id="entryDate" required />
+    </section>
 
-  <form id="dailyForm"></form>
+    <!--
+      NOTE TO SELF:
+      These buttons open the question modal (add/edit/archive) while logging.
+      Navigation and modal logic is in js/track.js.
+    -->
+    <section class="track-actions" aria-label="Question tools">
+      <button id="addQuestionBtn" type="button" class="secondary">➕ Add question</button>
+      <button id="manageQuestionsBtn" type="button" class="secondary">✏️ Edit / archive questions</button>
+    </section>
 
-  <button id="saveEntry">Save Entry</button>
-  <button id="goView">View Data</button>
+    <!--
+      NOTE TO SELF:
+      The daily form is generated dynamically based on active (non-archived) questions.
+    -->
+    <form id="dailyForm" aria-label="Daily entry form"></form>
 
-  <div id="saveMessage" class="hidden">✅ Entry saved!</div>
-  <button class="secondary" onclick="window.location.href='index.html'">Back to Setup</button>
+    <!--
+      NOTE TO SELF:
+      Save + View buttons.
+      Save updates/creates entry; View takes you to view.html.
+    -->
+    <section class="row-actions" aria-label="Entry actions">
+      <button id="saveEntry" type="button" class="primary">Save Entry</button>
+      <button id="goView" type="button" class="secondary">View Data</button>
+      <button id="backToSetupBtn" type="button" class="secondary">Back to Setup</button>
+    </section>
 
-  <nav class="bottom-nav">
-    <button data-page="index" onclick="window.location.href='index.html'">Setup</button>
-    <button data-page="track" onclick="window.location.href='track.html'">Track</button>
-    <button data-page="view" onclick="window.location.href='view.html'">View</button>
+    <!-- Confirmation toast/message -->
+    <div id="saveMessage" class="hidden" role="status" aria-live="polite">✅ Entry saved!</div>
+
+    <!--
+      NOTE TO SELF:
+      Question modal allows adding/editing questions mid-log.
+      track.js expects these IDs.
+    -->
+    <div id="questionModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="modalTitle">Manage Questions</h2>
+          <button id="closeQuestionModal" type="button" class="modal-close" aria-label="Close">✕</button>
+        </div>
+
+        <form id="modalQuestionForm" class="modal-form">
+          <label>
+            Question text
+            <input type="text" id="modalQuestionText" required />
+          </label>
+
+          <label>
+            Answer type
+            <select id="modalQuestionType" required>
+              <option value="boolean">Yes / No</option>
+              <option value="number">Number</option>
+              <option value="text">Short text</option>
+              <option value="date">Date</option>
+              <option value="select">Select (choose from options)</option>
+            </select>
+          </label>
+
+          <label>
+            Tags (optional, comma-separated)
+            <input type="text" id="modalQuestionTags" placeholder="e.g. Morning, Diet" />
+          </label>
+
+          <!-- Only shown when modalQuestionType === "select" -->
+          <div id="modalOptionsContainer" style="display:none;">
+            <label>
+              Options (comma-separated)
+              <input type="text" id="modalQuestionOptions" placeholder="e.g. Gluten, Dairy, Sugar" />
+            </label>
+          </div>
+
+          <!-- Only shown when modalQuestionType === "number" -->
+          <div id="modalScaleContainer" style="display:none;">
+            <label>
+              Number scale (optional)
+              <div class="scale-grid">
+                <input type="number" id="modalQuestionMin" placeholder="min" />
+                <input type="number" id="modalQuestionMax" placeholder="max" />
+                <input type="number" id="modalQuestionStep" placeholder="step" step="0.1" />
+              </div>
+            </label>
+          </div>
+
+          <div class="row-actions">
+            <button type="submit" class="primary">Save</button>
+            <button type="button" id="modalCancelEdit" class="secondary hidden">Cancel edit</button>
+          </div>
+        </form>
+
+        <h3 class="modal-subtitle">Active questions</h3>
+        <ul id="modalQuestionList" class="modal-list"></ul>
+
+        <p class="help-text">
+          Tip: If you change a question’s meaning (like the pain scale range), the app bumps its version so you can interpret history safely.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!--
+    NOTE TO SELF:
+    Bottom nav present on every page.
+    We avoid inline onclick; JS below handles routing + active state.
+  -->
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button type="button" data-href="index.html" data-page="index">Setup</button>
+    <button type="button" data-href="track.html" data-page="track">Track</button>
+    <button type="button" data-href="view.html" data-page="view">View</button>
   </nav>
 
   <footer style="text-align:center; margin-top:3rem; font-size:0.85rem; color:#888;">
     © <span id="year"></span> The Idiom Lab
   </footer>
 
+  <!-- Tiny shared page glue: footer year + bottom-nav routing + back button -->
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-  <script src="main.js"></script>
-  <script>
-    const current = window.location.pathname.split("/").pop().split(".")[0];
+
+    // Bottom nav click routing + active highlight
+    const currentPage = window.location.pathname.split("/").pop().split(".")[0];
     document.querySelectorAll(".bottom-nav button").forEach(btn => {
-      if (btn.dataset.page === current) {
-        btn.classList.add("active");
-      }
+      btn.addEventListener("click", () => {
+        const href = btn.dataset.href;
+        if (href) window.location.href = href;
+      });
+
+      if (btn.dataset.page === currentPage) btn.classList.add("active");
+    });
+
+    // Back to setup button
+    document.getElementById("backToSetupBtn")?.addEventListener("click", () => {
+      window.location.href = "index.html";
     });
   </script>
+
+  <!--
+    NOTE TO SELF:
+    Page logic for track.html using ES Modules (replaces old main.js).
+    Requires running via a local server (Live Server), not file://
+  -->
+  <script type="module" src="js/track.js"></script>
 </body>
 </html>
