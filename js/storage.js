@@ -10,6 +10,7 @@
 //   - comment (free text narrative)
 //   - meta (e.g., versionAtTime per question)
 // - Always normalise on load so older backups don’t break new code.
+// - Number questions can optionally use PRESETS (pain scale etc.)
 // ------------------------------------------------------------
 
 export const STORAGE_KEYS = {
@@ -17,6 +18,106 @@ export const STORAGE_KEYS = {
   ENTRIES: "entries",
   PIN_HASH: "pinHash",
 };
+
+// ------------------------------------------------------------
+// Number presets
+// NOTE TO SELF:
+// - Presets fill sensible defaults for scale/units/help text.
+// - User can still override scale/units/descriptors.
+// ------------------------------------------------------------
+export const NUMBER_PRESETS = {
+  pain_0_10: {
+    preset: "pain_0_10",
+    scale: { min: 0, max: 10, step: 1 },
+    units: "",
+    helpText: "0 = pain free, 10 = worst imaginable.",
+    descriptorText: `0 – Pain Free
+
+Mild Pain – Nagging, annoying, but doesn’t really interfere with daily living activities.
+1 – Pain is very mild, barely noticeable. Most of the time you don’t think about it.
+2 – Minor pain. Annoying and may have occasional stronger twinges.
+3 – Pain is noticeable and distracting, however, you can get used to it and adapt.
+
+Moderate Pain – Interferes significantly with daily living activities.
+4 – Moderate pain. If you are deeply involved in an activity, it can be ignored for a period of time, but is still distracting.
+5 – Moderately strong pain. It can’t be ignored for more than a few minutes, but with effort you still can manage to work or participate in some social activities.
+6 – Moderately strong pain that interferes with normal daily activities. Difficulty concentrating.
+
+Severe Pain – Disabling; unable to perform daily living activities.
+7 – Severe pain that dominates your senses and significantly limits your ability to perform normal daily activities or maintain social relationships. Interferes with sleep.
+8 – Intense pain. Physical activity is severely limited. Conversing requires great effort.
+9 – Excruciating pain. Unable to converse. Crying out and/or moaning uncontrollably.
+10 – Unspeakable pain. Bedridden and possibly delirious.`,
+  },
+
+  stiffness_0_10: {
+    preset: "stiffness_0_10",
+    scale: { min: 0, max: 10, step: 1 },
+    units: "",
+    helpText: "0 = no stiffness, 10 = worst imaginable.",
+    descriptorText: "",
+  },
+
+  fatigue_0_10: {
+    preset: "fatigue_0_10",
+    scale: { min: 0, max: 10, step: 1 },
+    units: "",
+    helpText: "",
+    descriptorText: "",
+  },
+
+  stress_0_10: {
+    preset: "stress_0_10",
+    scale: { min: 0, max: 10, step: 1 },
+    units: "",
+    helpText: "",
+    descriptorText: "",
+  },
+
+  mood_1_5: {
+    preset: "mood_1_5",
+    scale: { min: 1, max: 5, step: 1 },
+    units: "",
+    helpText: "",
+    descriptorText: "",
+  },
+
+  sleep_hours: {
+    preset: "sleep_hours",
+    scale: { min: 0, max: 14, step: 0.5 },
+    units: "hours",
+    helpText: "",
+    descriptorText: "",
+  },
+
+  exercise_minutes: {
+    preset: "exercise_minutes",
+    scale: { min: 0, max: 300, step: 5 },
+    units: "minutes",
+    helpText: "",
+    descriptorText: "",
+  },
+};
+
+export function applyNumberPreset(q) {
+  if (!q || q.type !== "number") return q;
+
+  const key = String(q.preset || "").trim();
+  if (!key || !NUMBER_PRESETS[key]) return q;
+
+  const p = NUMBER_PRESETS[key];
+
+  // NOTE TO SELF:
+  // Preset fills defaults, but anything user already set wins.
+  return {
+    ...q,
+    preset: p.preset,
+    scale: q.scale ?? p.scale,
+    units: (q.units ?? "") || (p.units ?? ""),
+    helpText: (q.helpText ?? "") || (p.helpText ?? ""),
+    descriptorText: (q.descriptorText ?? "") || (p.descriptorText ?? ""),
+  };
+}
 
 // ------------------------------------------------------------
 // Reset everything (double confirm)
@@ -173,13 +274,16 @@ export function normaliseQuestion(q) {
   const v = Number(nq.version);
   nq.version = Number.isFinite(v) && v > 0 ? v : 1;
 
+  // Number extras
+  nq.preset = nq.preset ? String(nq.preset) : "";
+  nq.units = nq.units ? String(nq.units) : "";
+  nq.helpText = nq.helpText ? String(nq.helpText) : "";
+  nq.descriptorText = nq.descriptorText ? String(nq.descriptorText) : "";
+
   nq.scale = normaliseScale(nq.scale);
 
-  if (nq.units !== undefined && nq.units !== null) {
-    nq.units = String(nq.units);
-  }
-
-  return nq;
+  // Apply preset defaults (if preset is selected)
+  return applyNumberPreset(nq);
 }
 
 // ------------------------------------------------------------
@@ -193,7 +297,6 @@ export function loadQuestions() {
   const raw = safeJSONParse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || "[]", []);
   const norm = Array.isArray(raw) ? raw.map(normaliseQuestion) : [];
 
-  // NOTE TO SELF:
   // Write-back normalised data so future loads are consistent.
   localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(norm));
   return norm;
@@ -202,7 +305,7 @@ export function loadQuestions() {
 // ------------------------------------------------------------
 // Entry normalisation
 // NOTE TO SELF:
-// entries.comment is NEW. Normalisation ensures older backups still work.
+// entries.comment is supported; normalisation ensures older backups still work.
 // ------------------------------------------------------------
 export function normaliseEntry(e) {
   const ne = { ...(e || {}) };
@@ -216,7 +319,7 @@ export function normaliseEntry(e) {
   ne.createdAt = ne.createdAt || nowISO();
   ne.updatedAt = ne.updatedAt || nowISO();
 
-  // NEW: clinician-friendly narrative context
+  // Clinician-friendly narrative context
   ne.comment = ne.comment ? String(ne.comment) : "";
 
   return ne;
@@ -245,6 +348,7 @@ export function loadEntries() {
 // - type change
 // - select options change
 // - number scale change
+// - (optional) preset change
 // ------------------------------------------------------------
 export function needsVersionBump(oldQ, newQ) {
   if (!oldQ) return false;
@@ -260,6 +364,9 @@ export function needsVersionBump(oldQ, newQ) {
   }
 
   if (oldType === "number") {
+    // If you switch presets, that is usually a meaning change.
+    if (String(oldQ.preset || "") !== String(newQ.preset || "")) return true;
+
     const aS = normaliseScale(oldQ.scale);
     const bS = normaliseScale(newQ.scale);
 

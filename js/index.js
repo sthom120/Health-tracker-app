@@ -10,8 +10,8 @@
 // - Navigation buttons (go to track page)
 //
 // NOTE TO SELF:
-// This file assumes storage.js owns all localStorage formats.
-// Keep all normalisation/version-bump logic inside storage.js.
+// - storage.js owns the data formats + normalisation.
+// - index.js should only collect inputs and call storage helpers.
 // ------------------------------------------------------------
 
 import {
@@ -22,6 +22,7 @@ import {
   normaliseScale,
   needsVersionBump,
   resetAllData,
+  NUMBER_PRESETS, // used to populate preset dropdown if present
 } from "./storage.js";
 
 /* ------------------------------------------------------------
@@ -34,9 +35,6 @@ function moveItem(arr, from, to) {
 
 /* ------------------------------------------------------------
    Greeting + body theme class (purely UI polish)
-   NOTE TO SELF:
-   Add CSS classes like .theme-morning / .theme-afternoon / .theme-evening
-   if you want background changes by time of day.
 ------------------------------------------------------------ */
 function setGreetingTheme() {
   const greetingText = document.getElementById("greetingText");
@@ -63,8 +61,6 @@ function setGreetingTheme() {
   }
 
   greetingText.innerHTML = `<h1>${greeting}</h1><p id="greetingSub">${subtext}</p>`;
-
-  // NOTE TO SELF: if you ever change themes, consider removing old theme classes first.
   document.body.classList.add(themeClass);
 }
 
@@ -98,6 +94,13 @@ function initSetupPage() {
   const maxEl = document.getElementById("questionMax");
   const stepEl = document.getElementById("questionStep");
 
+  // --- NEW/optional: number extras ---
+  // NOTE TO SELF: these elements are optional; script will work without them.
+  const presetContainerEl = document.getElementById("presetContainer"); // optional wrapper
+  const presetEl = document.getElementById("questionPreset"); // optional select
+  const unitsEl = document.getElementById("questionUnits"); // optional input
+  const descriptorsEl = document.getElementById("questionDescriptors"); // optional textarea
+
   // --- Add/Edit mode controls ---
   const cancelEditBtn = document.getElementById("cancelEdit");
   const formTitleEl = document.getElementById("questionFormTitle");
@@ -109,11 +112,32 @@ function initSetupPage() {
   const resetAllBtn = document.getElementById("resetAllBtn");
 
   // --- In-memory state ---
-  // NOTE TO SELF:
-  // Keep `questions` as your working copy, but always reload before final save
-  // if you suspect other pages could have changed storage.
   let questions = loadQuestions();
   let editingId = null;
+
+  /* ----------------------------------------------------------
+     Optional: populate preset dropdown from storage.js
+     NOTE TO SELF:
+     - Presets are only relevant for number questions.
+     - If you don't have the select in HTML, nothing happens.
+  ---------------------------------------------------------- */
+  function populatePresetsIfPresent() {
+    if (!presetEl) return;
+
+    // Clear + add default
+    presetEl.innerHTML = "";
+    presetEl.appendChild(new Option("— None —", ""));
+
+    Object.keys(NUMBER_PRESETS || {}).forEach(key => {
+      // Human-ish label
+      const label = key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+
+      presetEl.appendChild(new Option(label, key));
+    });
+  }
+  populatePresetsIfPresent();
 
   /* ----------------------------------------------------------
      UI helpers: show/hide fields based on selected answer type
@@ -124,6 +148,16 @@ function initSetupPage() {
     }
     if (scaleContainerEl) {
       scaleContainerEl.style.display = type === "number" ? "block" : "none";
+    }
+
+    // New: presets/units/descriptors only make sense for number
+    if (presetContainerEl) {
+      presetContainerEl.style.display = type === "number" ? "block" : "none";
+    } else {
+      // If no wrapper, just hide inputs directly if they exist
+      if (presetEl) presetEl.style.display = type === "number" ? "block" : "none";
+      if (unitsEl) unitsEl.style.display = type === "number" ? "block" : "none";
+      if (descriptorsEl) descriptorsEl.style.display = type === "number" ? "block" : "none";
     }
   }
 
@@ -147,14 +181,16 @@ function initSetupPage() {
 
   /* ----------------------------------------------------------
      Archive/unarchive helpers
-     NOTE TO SELF:
-     We keep archived questions so historical data stays readable.
   ---------------------------------------------------------- */
   function archiveQuestion(id) {
     const q = questions.find(x => x.id === id);
     if (!q) return;
 
-    if (!confirm("Archive this question? It will stop appearing in the daily form, but past data will be kept.")) {
+    if (
+      !confirm(
+        "Archive this question? It will stop appearing in the daily form, but past data will be kept."
+      )
+    ) {
       return;
     }
 
@@ -173,9 +209,7 @@ function initSetupPage() {
   }
 
   /* ----------------------------------------------------------
-     Enter “Edit question” mode
-     NOTE TO SELF:
-     We preload values into the form, then submit updates the same question id.
+     Enter “Edit question” mode (preload values into form)
   ---------------------------------------------------------- */
   function startEditQuestion(id) {
     const q = questions.find(x => x.id === id);
@@ -196,6 +230,11 @@ function initSetupPage() {
     if (minEl) minEl.value = s.min ?? "";
     if (maxEl) maxEl.value = s.max ?? "";
     if (stepEl) stepEl.value = s.step ?? "";
+
+    // New number extras (optional in UI)
+    if (presetEl) presetEl.value = q.preset || "";
+    if (unitsEl) unitsEl.value = q.units || "";
+    if (descriptorsEl) descriptorsEl.value = q.descriptorText || "";
 
     setTypeUI(q.type);
   }
@@ -226,7 +265,13 @@ function initSetupPage() {
 
       const tagsText = q.tags?.length ? ` {${q.tags.join(", ")}}` : "";
 
-      info.textContent = `${index + 1}. ${q.text} (${q.type})${optionsText}${tagsText}`;
+      // Add number extras preview
+      const numExtras =
+        q.type === "number"
+          ? ` ${q.preset ? `[preset: ${q.preset}]` : ""}${q.units ? ` [units: ${q.units}]` : ""}`
+          : "";
+
+      info.textContent = `${index + 1}. ${q.text} (${q.type})${optionsText}${tagsText}${numExtras}`;
       li.appendChild(info);
 
       // Action buttons container
@@ -257,8 +302,6 @@ function initSetupPage() {
       upBtn.addEventListener("click", () => {
         if (index === 0) return;
 
-        // NOTE TO SELF:
-        // We reorder within the *full* questions array but using active list indices.
         const activeIds = activeQuestions.map(aq => aq.id);
         const from = questions.findIndex(x => x.id === activeIds[index]);
         const to = questions.findIndex(x => x.id === activeIds[index - 1]);
@@ -317,7 +360,12 @@ function initSetupPage() {
 
       const tagsText = q.tags?.length ? ` {${q.tags.join(", ")}}` : "";
 
-      info.textContent = `${q.text} (${q.type})${optionsText}${tagsText}`;
+      const numExtras =
+        q.type === "number"
+          ? ` ${q.preset ? `[preset: ${q.preset}]` : ""}${q.units ? ` [units: ${q.units}]` : ""}`
+          : "";
+
+      info.textContent = `${q.text} (${q.type})${optionsText}${tagsText}${numExtras}`;
       li.appendChild(info);
 
       const actions = document.createElement("div");
@@ -387,6 +435,11 @@ function initSetupPage() {
           })
         : null;
 
+    // NEW: number extras
+    const preset = type === "number" ? String(presetEl?.value || "").trim() : "";
+    const units = type === "number" ? String(unitsEl?.value || "").trim() : "";
+    const descriptorText = type === "number" ? String(descriptorsEl?.value || "") : "";
+
     // --- Edit existing question ---
     if (editingId) {
       const idx = questions.findIndex(q => q.id === editingId);
@@ -402,13 +455,20 @@ function initSetupPage() {
         text,
         type,
         tags,
-        // If switching away from "select", keep old options (so we don’t accidentally delete history configs)
+
+        // If switching away from "select", keep old options
         options: type === "select" ? options : (oldQ.options || []),
+
+        // Scale only for number questions
         scale: type === "number" ? scale : null,
+
+        // New fields (only meaningful for number)
+        preset,
+        units,
+        descriptorText,
       });
 
-      // NOTE TO SELF:
-      // If meaning changes, bump version so clinician can interpret history safely.
+      // If meaning changes, bump version so history stays interpretable
       if (needsVersionBump(oldQ, updated)) {
         updated.version = (Number(oldQ.version) || 1) + 1;
       }
@@ -428,6 +488,12 @@ function initSetupPage() {
         tags,
         options: type === "select" ? options : [],
         scale: type === "number" ? scale : null,
+
+        // New fields (only meaningful for number)
+        preset,
+        units,
+        descriptorText,
+
         archived: false,
         version: 1,
       })
@@ -442,7 +508,7 @@ function initSetupPage() {
      Danger zone actions
   ---------------------------------------------------------- */
 
-  // Clear questions + entries (keeps PIN unless your resetAllData removes it)
+  // Clear questions + entries
   deleteAllQuestionsBtn?.addEventListener("click", () => {
     if (!confirm("Delete ALL questions and ALL entries?")) return;
 
@@ -462,7 +528,7 @@ function initSetupPage() {
     alert("All recorded data cleared.");
   });
 
-  // Full reset (uses your storage.js helper so logic lives in one place)
+  // Full reset (uses storage.js helper so logic lives in one place)
   resetAllBtn?.addEventListener("click", () => {
     resetAllData();
     window.location.reload();
@@ -476,6 +542,7 @@ function initSetupPage() {
 
   // Initial render
   renderLists();
+  resetFormUI();
 }
 
 initSetupPage();

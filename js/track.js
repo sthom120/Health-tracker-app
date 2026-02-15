@@ -7,7 +7,9 @@
 // - Save/update one entry per date
 // - Support edit mode (from view page)
 // - Optional: manage questions inside a modal while logging
-// - NEW: store an optional free-text comment per entry
+// - Store an optional free-text comment per entry
+// - NEW: support "time" questions (HH:MM)
+// - NEW: show number question help + expandable descriptors (e.g. pain scale)
 // ------------------------------------------------------------
 
 import {
@@ -29,16 +31,20 @@ function initTrackPage() {
   const form = document.getElementById("dailyForm");
   if (!form) return; // not on track page
 
+  // ----------------------------
   // Main controls
+  // ----------------------------
   const saveBtn = document.getElementById("saveEntry");
   const goView = document.getElementById("goView");
   const dateField = document.getElementById("entryDate");
   const msg = document.getElementById("saveMessage");
 
-  // NEW: optional comment field (must exist in track.html outside the modal)
+  // Optional entry-level comment (outside the modal)
   const commentEl = document.getElementById("entryComment");
 
-  // Optional modal elements
+  // ----------------------------
+  // Optional question modal elements
+  // ----------------------------
   const addQuestionBtn = document.getElementById("addQuestionBtn");
   const manageQuestionsBtn = document.getElementById("manageQuestionsBtn");
   const questionModal = document.getElementById("questionModal");
@@ -51,13 +57,23 @@ function initTrackPage() {
   const modalText = document.getElementById("modalQuestionText");
   const modalType = document.getElementById("modalQuestionType");
   const modalTags = document.getElementById("modalQuestionTags");
+
   const modalOptionsContainer = document.getElementById("modalOptionsContainer");
   const modalOptions = document.getElementById("modalQuestionOptions");
+
   const modalScaleContainer = document.getElementById("modalScaleContainer");
   const modalMin = document.getElementById("modalQuestionMin");
   const modalMax = document.getElementById("modalQuestionMax");
   const modalStep = document.getElementById("modalQuestionStep");
 
+  // Optional newer modal fields (only exist if you added them in track.html)
+  const modalPreset = document.getElementById("modalQuestionPreset");
+  const modalUnits = document.getElementById("modalQuestionUnits");
+  const modalDescriptors = document.getElementById("modalQuestionDescriptors");
+
+  // ----------------------------
+  // Load state
+  // ----------------------------
   let questions = loadQuestions();
   let entries = loadEntries();
 
@@ -71,6 +87,9 @@ function initTrackPage() {
     entryToEdit = entries.find(e => e.id === editEntryId) || null;
   }
 
+  // ----------------------------
+  // Helpers
+  // ----------------------------
   function activeQuestions() {
     questions = loadQuestions();
     return questions.filter(q => !q.archived);
@@ -88,7 +107,7 @@ function initTrackPage() {
   }
 
   // NOTE TO SELF:
-  // This is where adding new answer types (like "time") becomes easy.
+  // This is where adding new answer types becomes easy.
   function buildInputForQuestion(q) {
     let input;
 
@@ -107,11 +126,18 @@ function initTrackPage() {
         input = document.createElement("input");
         input.type = "number";
 
-        // Use question-defined scale if present; otherwise allow a reasonable default.
+        // Use question-defined scale if present; otherwise let browser default.
         const s = normaliseScale(q.scale) || null;
         if (s && Number.isFinite(s.min)) input.min = String(s.min);
         if (s && Number.isFinite(s.max)) input.max = String(s.max);
         if (s && Number.isFinite(s.step)) input.step = String(s.step);
+
+        break;
+      }
+
+      case "time": {
+        input = document.createElement("input");
+        input.type = "time"; // stores HH:MM
         break;
       }
 
@@ -148,9 +174,42 @@ function initTrackPage() {
       }
     }
 
-    // For non-checkbox group inputs, give the input a "name" so form.elements[q.id] works.
+    // For non-checkbox group inputs, set name so form.elements[q.id] works.
     if (q.type !== "select") input.name = q.id;
     return input;
+  }
+
+  function renderNumberHelpers(card, q) {
+    // Small hint line (units + helpText)
+    const bits = [];
+
+    if (q.units) bits.push(`Units: ${q.units}`);
+    if (q.helpText) bits.push(q.helpText);
+
+    if (bits.length) {
+      const hint = document.createElement("p");
+      hint.className = "help-text";
+      hint.textContent = bits.join(" • ");
+      card.appendChild(hint);
+    }
+
+    // Optional expandable descriptor text (pain scale etc.)
+    if (q.descriptorText && String(q.descriptorText).trim()) {
+      const details = document.createElement("details");
+      details.className = "help-text";
+
+      const summary = document.createElement("summary");
+      summary.textContent = "More info";
+      details.appendChild(summary);
+
+      const pre = document.createElement("pre");
+      pre.style.whiteSpace = "pre-wrap";
+      pre.style.marginTop = ".5rem";
+      pre.textContent = q.descriptorText;
+      details.appendChild(pre);
+
+      card.appendChild(details);
+    }
   }
 
   function renderDailyForm() {
@@ -169,6 +228,12 @@ function initTrackPage() {
       label.appendChild(input);
 
       card.appendChild(label);
+
+      // Add number-specific help + scale descriptors (if provided)
+      if (q.type === "number") {
+        renderNumberHelpers(card, q);
+      }
+
       form.appendChild(card);
     });
 
@@ -200,7 +265,7 @@ function initTrackPage() {
       });
     }
 
-    // NEW: Prefill comment in edit mode
+    // Prefill comment in edit mode
     if (commentEl) {
       commentEl.value = entryToEdit?.comment || "";
     }
@@ -208,9 +273,9 @@ function initTrackPage() {
 
   renderDailyForm();
 
-  /* ----------------------------------------------------------
-     Save entry (create new or update existing)
-  ---------------------------------------------------------- */
+  // ----------------------------------------------------------
+  // Save entry (create new or update existing)
+  // ----------------------------------------------------------
   saveBtn?.addEventListener("click", () => {
     questions = loadQuestions();
     entries = loadEntries();
@@ -226,8 +291,8 @@ function initTrackPage() {
       meta: {},
       updatedAt: nowISO(),
 
-      // NEW: store optional comment at top level (easy to export & display)
-      comment: commentEl ? commentEl.value.trim() : "",
+      // Entry-level narrative context (clinician-friendly)
+      comment: commentEl ? String(commentEl.value || "").trim() : "",
     };
 
     qs.forEach(q => {
@@ -243,13 +308,13 @@ function initTrackPage() {
           form.querySelectorAll(`input[name="${q.id}"]:checked`)
         ).map(cb => cb.value);
       } else {
+        // text / number / date / time
         val = form.elements[q.id]?.value ?? "";
       }
 
       data.responses[q.id] = val;
 
-      // NOTE TO SELF:
-      // Store the question version so you know what “meaning” this value had at the time.
+      // Store question version so the value’s meaning is preserved over time
       data.meta[q.id] = { versionAtTime: q.version || 1 };
     });
 
@@ -264,7 +329,7 @@ function initTrackPage() {
           id: entryToEdit.id,
         };
       } else {
-        // If for some reason we can't find it, fallback to creating a new one
+        // If we can't find it, fallback to creating a new one
         entries.push(normaliseEntry({ ...data, id: createId("e") }));
       }
 
@@ -313,11 +378,9 @@ function initTrackPage() {
 
   goView?.addEventListener("click", () => (window.location.href = "view.html"));
 
-  /* ----------------------------------------------------------
-     Optional question modal
-     NOTE TO SELF:
-     If you ever want to support un-archiving here, add a second list.
-  ---------------------------------------------------------- */
+  // ----------------------------------------------------------
+  // Optional question modal
+  // ----------------------------------------------------------
   if (!questionModal || !modalForm) return;
 
   let modalEditingId = null;
@@ -385,10 +448,16 @@ function initTrackPage() {
         if (modalTags) modalTags.value = (q.tags || []).join(", ");
         if (modalOptions) modalOptions.value = Array.isArray(q.options) ? q.options.join(", ") : "";
 
+        // Number fields
         const s = normaliseScale(q.scale) || {};
         if (modalMin) modalMin.value = s.min ?? "";
         if (modalMax) modalMax.value = s.max ?? "";
         if (modalStep) modalStep.value = s.step ?? "";
+
+        // Optional newer fields
+        if (modalPreset) modalPreset.value = q.preset || "";
+        if (modalUnits) modalUnits.value = q.units || "";
+        if (modalDescriptors) modalDescriptors.value = q.descriptorText || "";
 
         modalSetTypeUI(q.type);
       });
@@ -446,6 +515,11 @@ function initTrackPage() {
           })
         : null;
 
+    // Optional newer fields
+    const preset = type === "number" ? String(modalPreset?.value || "").trim() : "";
+    const units = type === "number" ? String(modalUnits?.value || "").trim() : "";
+    const descriptorText = type === "number" ? String(modalDescriptors?.value || "") : "";
+
     // Update existing question
     if (modalEditingId) {
       const idx = questions.findIndex(q => q.id === modalEditingId);
@@ -460,6 +534,11 @@ function initTrackPage() {
         tags,
         options: type === "select" ? options : (oldQ.options || []),
         scale: type === "number" ? scale : null,
+
+        // New fields
+        preset,
+        units,
+        descriptorText,
       });
 
       if (needsVersionBump(oldQ, updated)) {
@@ -487,6 +566,12 @@ function initTrackPage() {
         tags,
         options: type === "select" ? options : [],
         scale: type === "number" ? scale : null,
+
+        // New fields
+        preset,
+        units,
+        descriptorText,
+
         archived: false,
         version: 1,
       })

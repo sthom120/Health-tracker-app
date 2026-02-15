@@ -4,9 +4,9 @@
   <!--
     NOTE TO SELF:
     Gatekeeping / lock check:
-    - Only redirect if a PIN exists.
-    - Run before render to avoid “flash” of protected content.
-    - replace() avoids adding this page to history.
+    - Only redirect if a PIN exists (pinHash in localStorage).
+    - Run BEFORE render to avoid a “flash” of protected content.
+    - replace() avoids adding the protected page to browser history.
   -->
   <script>
     if (localStorage.getItem("pinHash") && !sessionStorage.getItem("unlocked")) {
@@ -25,19 +25,24 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
 
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <!--
     NOTE TO SELF:
-    Shared header across pages.
+    Shared header across pages for a consistent “app identity”.
     Logo links back to setup (home/config).
   -->
   <header id="appHeader">
     <div class="logo-row">
       <a href="index.html" aria-label="Go to setup">
-        <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo" />
+        <img
+          src="icons/icon-192.png"
+          alt="Health Tracker Logo"
+          class="app-logo"
+        />
       </a>
 
       <div class="header-text">
@@ -48,17 +53,22 @@
   </header>
 
   <main>
-    <!-- Quick instruction -->
+    <!--
+      NOTE TO SELF:
+      Quick context only. Keep it short so logging feels fast.
+    -->
     <section class="intro-section" aria-label="Page intro">
-      <p class="intro-text">Record today’s data (or choose another date). Fill in what applies.</p>
+      <p class="intro-text">
+        Record today’s data (or choose another date). Fill in what applies.
+      </p>
     </section>
 
     <!--
       NOTE TO SELF:
-      Date is the main key for entries (“one per day” unless overwriting).
-      track.js:
-      - defaults to today
-      - sets the entry date when editing an existing entry
+      Date is the primary key for entries (“one per day” unless overwriting).
+      track.js will:
+      - default to today
+      - set this date when editing an existing entry
     -->
     <section class="date-card" aria-label="Entry date">
       <label for="entryDate">Date (required):</label>
@@ -67,26 +77,29 @@
 
     <!--
       NOTE TO SELF:
-      Open the question modal to add/edit/archive questions mid-log.
+      These open the Manage Questions modal (add/edit/archive) while logging.
       Modal logic lives in js/track.js.
     -->
     <section class="track-actions" aria-label="Question tools">
-      <button id="addQuestionBtn" type="button" class="secondary">➕ Add question</button>
-      <button id="manageQuestionsBtn" type="button" class="secondary">✏️ Edit / archive questions</button>
+      <button id="addQuestionBtn" type="button" class="secondary">
+        ➕ Add question
+      </button>
+      <button id="manageQuestionsBtn" type="button" class="secondary">
+        ✏️ Edit / archive questions
+      </button>
     </section>
 
     <!--
       NOTE TO SELF:
-      dailyForm is generated dynamically from active (non-archived) questions.
-      Keep it empty in HTML — track.js populates it.
-      (CSS note: you currently style all <form> elements; that will also style this.)
+      Daily question form is generated dynamically from active questions.
+      Keep empty in HTML — track.js populates it.
     -->
     <form id="dailyForm" aria-label="Daily entry form"></form>
 
     <!--
       NOTE TO SELF:
-      Free-text context for the day (flare, meds change, unusual stress, etc.)
-      This should be stored as entry.comment (NOT inside responses) so it exports cleanly.
+      Entry-level free text context.
+      Stored as entry.comment (NOT inside responses) so export/display stays clean.
     -->
     <section class="entry-card" aria-label="Optional comment">
       <label for="entryComment">
@@ -99,22 +112,33 @@
       </label>
     </section>
 
-    <!-- Main actions -->
+    <!--
+      NOTE TO SELF:
+      Primary actions:
+      - Save Entry: create/update entry for selected date
+      - View Data: go to view.html
+      - Back to Setup: go to index.html
+    -->
     <section class="row-actions" aria-label="Entry actions">
       <button id="saveEntry" type="button" class="primary">Save Entry</button>
       <button id="goView" type="button" class="secondary">View Data</button>
       <button id="backToSetupBtn" type="button" class="secondary">Back to Setup</button>
     </section>
 
-    <!-- Non-blocking success message -->
-    <div id="saveMessage" class="hidden" role="status" aria-live="polite">✅ Entry saved!</div>
+    <!--
+      NOTE TO SELF:
+      Non-blocking success message. track.js toggles the .hidden class.
+    -->
+    <div id="saveMessage" class="hidden" role="status" aria-live="polite">
+      ✅ Entry saved!
+    </div>
 
     <!--
       NOTE TO SELF:
       Question modal:
-      - Used for question management without leaving the page
-      - track.js expects these exact IDs
-      - Keep entry comment OUTSIDE this modal (it belongs to the daily entry)
+      - Used for question management without leaving the page.
+      - track.js expects these exact IDs.
+      - Entry comment stays OUTSIDE this modal (belongs to the daily entry).
     -->
     <div
       id="questionModal"
@@ -126,7 +150,14 @@
       <div class="modal-card">
         <div class="modal-header">
           <h2 id="modalTitle">Manage Questions</h2>
-          <button id="closeQuestionModal" type="button" class="modal-close" aria-label="Close">✕</button>
+          <button
+            id="closeQuestionModal"
+            type="button"
+            class="modal-close"
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
 
         <form id="modalQuestionForm" class="modal-form">
@@ -142,38 +173,104 @@
               <option value="number">Number</option>
               <option value="text">Short text</option>
               <option value="date">Date</option>
+              <option value="time">Time (HH:MM)</option>
               <option value="select">Select (choose from options)</option>
             </select>
           </label>
 
           <label>
             Tags (optional, comma-separated)
-            <input type="text" id="modalQuestionTags" placeholder="e.g. Morning, Diet" />
+            <input
+              type="text"
+              id="modalQuestionTags"
+              placeholder="e.g. Morning, Diet"
+            />
           </label>
 
-          <!-- Shown only for "select" type -->
+          <!--
+            NOTE TO SELF:
+            Only shown when modalQuestionType === "select"
+          -->
           <div id="modalOptionsContainer" style="display:none;">
             <label>
               Options (comma-separated)
-              <input type="text" id="modalQuestionOptions" placeholder="e.g. Gluten, Dairy, Sugar" />
+              <input
+                type="text"
+                id="modalQuestionOptions"
+                placeholder="e.g. Gluten, Dairy, Sugar"
+              />
             </label>
           </div>
 
-          <!-- Shown only for "number" type -->
+          <!--
+            NOTE TO SELF:
+            Only shown when modalQuestionType === "number"
+            These fields map to question fields used in track.js:
+            - preset -> q.preset
+            - units -> q.units
+            - min/max/step -> q.scale
+            - descriptorText -> q.descriptorText
+          -->
           <div id="modalScaleContainer" style="display:none;">
+            <label>
+              Scale preset (optional)
+              <select id="modalQuestionPreset">
+                <option value="">Custom</option>
+                <option value="pain_0_10">Pain (0–10)</option>
+                <option value="stiffness_0_10">Stiffness (0–10)</option>
+                <option value="fatigue_0_10">Fatigue (0–10)</option>
+                <option value="stress_0_10">Stress (0–10)</option>
+                <option value="mood_1_5">Mood (1–5)</option>
+                <option value="sleep_hours">Sleep hours (0–14)</option>
+                <option value="exercise_minutes">Exercise minutes (0–300)</option>
+              </select>
+            </label>
+
+            <label>
+              Units (optional)
+              <input
+                type="text"
+                id="modalQuestionUnits"
+                placeholder="e.g. minutes, hours, mg"
+              />
+            </label>
+
             <label>
               Number scale (optional)
               <div class="scale-grid">
                 <input type="number" id="modalQuestionMin" placeholder="min" />
                 <input type="number" id="modalQuestionMax" placeholder="max" />
-                <input type="number" id="modalQuestionStep" placeholder="step" step="0.1" />
+                <input
+                  type="number"
+                  id="modalQuestionStep"
+                  placeholder="step"
+                  step="0.1"
+                />
               </div>
             </label>
+
+            <details class="help-text" style="margin-top:.6rem;">
+              <summary>Scale descriptors (optional)</summary>
+              <label style="margin-top:.5rem;">
+                <textarea
+                  id="modalQuestionDescriptors"
+                  rows="6"
+                  placeholder="0 — pain free
+10 — worst imaginable pain"
+                ></textarea>
+              </label>
+            </details>
           </div>
 
           <div class="row-actions">
             <button type="submit" class="primary">Save</button>
-            <button type="button" id="modalCancelEdit" class="secondary hidden">Cancel edit</button>
+            <button
+              type="button"
+              id="modalCancelEdit"
+              class="secondary hidden"
+            >
+              Cancel edit
+            </button>
           </div>
         </form>
 
@@ -181,13 +278,18 @@
         <ul id="modalQuestionList" class="modal-list"></ul>
 
         <p class="help-text">
-          Tip: If you change a question’s meaning (like the pain scale range), bump version so history stays interpretable.
+          Tip: If you change a question’s meaning (like the pain scale range),
+          bump version so history stays interpretable.
         </p>
       </div>
     </div>
   </main>
 
-  <!-- Bottom navigation -->
+  <!--
+    NOTE TO SELF:
+    Bottom nav present on every page.
+    Buttons use data-href + data-page for routing + active highlighting.
+  -->
   <nav class="bottom-nav" aria-label="Primary navigation">
     <button type="button" data-href="index.html" data-page="index">Setup</button>
     <button type="button" data-href="track.html" data-page="track">Track</button>
@@ -222,7 +324,11 @@
     });
   </script>
 
-  <!-- Page logic -->
+  <!--
+    NOTE TO SELF:
+    Track page logic (ES module).
+    Requires running via a local server (Live Server), not file://
+  -->
   <script type="module" src="js/track.js"></script>
 </body>
 </html>

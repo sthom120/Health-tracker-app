@@ -139,6 +139,7 @@
           <option value="number">Number (e.g. 1–10)</option>
           <option value="text">Short text</option>
           <option value="date">Date</option>
+          <option value="time">Time (HH:MM)</option>
           <option value="select">Select (choose from options)</option>
         </select>
       </label>
@@ -165,21 +166,51 @@
         Scale is optional, but makes data more meaningful (e.g. pain 0–10).
       -->
       <div id="scaleContainer" style="display:none;">
-        <label>
-          Number scale (optional):
-          <div class="scale-grid">
-            <input type="number" id="questionMin" placeholder="min (e.g. 0)" />
-            <input type="number" id="questionMax" placeholder="max (e.g. 10)" />
-            <input
-              type="number"
-              id="questionStep"
-              placeholder="step (e.g. 1)"
-              step="0.1"
-            />
-          </div>
-        </label>
-        <p class="help-text">Tip: for pain you might use 0–10. For mood you might use 1–5.</p>
-      </div>
+  <label>
+    Scale preset (optional):
+    <select id="questionPreset">
+      <option value="">Custom</option>
+      <option value="pain_0_10">Pain (0–10)</option>
+      <option value="stiffness_0_10">Stiffness (0–10)</option>
+      <option value="fatigue_0_10">Fatigue (0–10)</option>
+      <option value="stress_0_10">Stress (0–10)</option>
+      <option value="mood_1_5">Mood (1–5)</option>
+      <option value="sleep_hours">Sleep hours (0–14)</option>
+      <option value="exercise_minutes">Exercise minutes (0–300)</option>
+    </select>
+  </label>
+
+  <label>
+    Units (optional):
+    <input type="text" id="questionUnits" placeholder="e.g. minutes, hours, mg, °C" />
+  </label>
+
+  <label>
+    Number scale (optional):
+    <div class="scale-grid">
+      <input type="number" id="questionMin" placeholder="min (e.g. 0)" />
+      <input type="number" id="questionMax" placeholder="max (e.g. 10)" />
+      <input type="number" id="questionStep" placeholder="step (e.g. 1)" step="0.1" />
+    </div>
+  </label>
+
+  <p class="help-text">
+    Step = the “jump size” between allowed values. Example: step 1 → whole numbers; step 0.5 → halves.
+  </p>
+
+  <details class="help-text" style="margin-top:.6rem;">
+    <summary>Scale descriptors (optional)</summary>
+    <label style="margin-top:.5rem;">
+      Add definitions for the numbers (great for pain/stiffness):
+      <textarea id="questionDescriptors" rows="6"
+        placeholder="Example:
+0 — Pain free
+5 — Moderately strong pain
+10 — Worst imaginable pain"></textarea>
+    </label>
+  </details>
+</div>
+
 
       <div class="row-actions">
         <button type="submit" id="questionSubmit">Add to Tracker</button>
