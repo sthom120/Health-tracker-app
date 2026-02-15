@@ -1,181 +1,228 @@
-// js/storage.js
-// Shared helpers: storage, normalisation, ids, dates, small utilities.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    NOTE TO SELF:
+    Gatekeeping / lock check:
+    - Only redirect if a PIN exists.
+    - Run before render to avoid “flash” of protected content.
+    - replace() avoids adding this page to history.
+  -->
+  <script>
+    if (localStorage.getItem("pinHash") && !sessionStorage.getItem("unlocked")) {
+      window.location.replace("pin-lock.html");
+    }
+  </script>
 
-export const STORAGE_KEYS = {
-  QUESTIONS: "questions",
-  ENTRIES: "entries",
-};
+  <!-- Standard meta order -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-export function resetAllData() {
-  const first = confirm(
-    "Reset EVERYTHING? This will permanently delete all questions and all entries."
-  );
-  if (!first) return;
+  <title>Daily Tracker</title>
 
-  const second = confirm(
-    "Are you absolutely sure? This cannot be undone."
-  );
-  if (!second) return;
+  <!-- iOS “Add to Home Screen” support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
 
-  // Clear only keys your app uses (safer than localStorage.clear()).
-  const keysToRemove = [
-    "questions",
-    "archivedQuestions",
-    "entries",
-    "pinHash" // OPTIONAL: remove this line if you want PIN to remain after reset
-  ];
+  <link rel="stylesheet" href="style.css" />
+</head>
 
-  keysToRemove.forEach(k => localStorage.removeItem(k));
+<body>
+  <!--
+    NOTE TO SELF:
+    Shared header across pages.
+    Logo links back to setup (home/config).
+  -->
+  <header id="appHeader">
+    <div class="logo-row">
+      <a href="index.html" aria-label="Go to setup">
+        <img src="icons/icon-192.png" alt="Health Tracker Logo" class="app-logo" />
+      </a>
 
-  // Session state (edit mode, unlock status etc.)
-  sessionStorage.removeItem("editEntryId");
-  // sessionStorage.removeItem("unlocked"); // OPTIONAL: if you want reset to also lock the app again
+      <div class="header-text">
+        <h1 id="appTitle">Personal Health Tracker</h1>
+        <p class="tagline">Small daily reflections, big long-term insights.</p>
+      </div>
+    </div>
+  </header>
 
-  alert("All data cleared. Starting fresh.");
-}
+  <main>
+    <!-- Quick instruction -->
+    <section class="intro-section" aria-label="Page intro">
+      <p class="intro-text">Record today’s data (or choose another date). Fill in what applies.</p>
+    </section>
 
-export function safeJSONParse(raw, fallback) {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
+    <!--
+      NOTE TO SELF:
+      Date is the main key for entries (“one per day” unless overwriting).
+      track.js:
+      - defaults to today
+      - sets the entry date when editing an existing entry
+    -->
+    <section class="date-card" aria-label="Entry date">
+      <label for="entryDate">Date (required):</label>
+      <input type="date" id="entryDate" required />
+    </section>
 
-export function nowISO() {
-  return new Date().toISOString();
-}
+    <!--
+      NOTE TO SELF:
+      Open the question modal to add/edit/archive questions mid-log.
+      Modal logic lives in js/track.js.
+    -->
+    <section class="track-actions" aria-label="Question tools">
+      <button id="addQuestionBtn" type="button" class="secondary">➕ Add question</button>
+      <button id="manageQuestionsBtn" type="button" class="secondary">✏️ Edit / archive questions</button>
+    </section>
 
-export function todayISODate() {
-  return new Date().toISOString().split("T")[0];
-}
+    <!--
+      NOTE TO SELF:
+      dailyForm is generated dynamically from active (non-archived) questions.
+      Keep it empty in HTML — track.js populates it.
+      (CSS note: you currently style all <form> elements; that will also style this.)
+    -->
+    <form id="dailyForm" aria-label="Daily entry form"></form>
 
-// Safer parse for YYYY-MM-DD to avoid timezone issues
-export function parseLocalDate(yyyyMMdd) {
-  if (!yyyyMMdd || typeof yyyyMMdd !== "string") return null;
-  const [y, m, d] = yyyyMMdd.split("-").map(n => parseInt(n, 10));
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-}
+    <!--
+      NOTE TO SELF:
+      Free-text context for the day (flare, meds change, unusual stress, etc.)
+      This should be stored as entry.comment (NOT inside responses) so it exports cleanly.
+    -->
+    <section class="entry-card" aria-label="Optional comment">
+      <label for="entryComment">
+        Comment (optional)
+        <textarea
+          id="entryComment"
+          rows="3"
+          placeholder="Anything notable today? (flare, meds change, sleep issue, unusual stress, etc.)"
+        ></textarea>
+      </label>
+    </section>
 
-export function createId(prefix = "id") {
-  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-}
+    <!-- Main actions -->
+    <section class="row-actions" aria-label="Entry actions">
+      <button id="saveEntry" type="button" class="primary">Save Entry</button>
+      <button id="goView" type="button" class="secondary">View Data</button>
+      <button id="backToSetupBtn" type="button" class="secondary">Back to Setup</button>
+    </section>
 
-export function normaliseTags(tags) {
-  if (!tags) return [];
-  if (Array.isArray(tags)) {
-    return tags.map(t => String(t).trim()).filter(Boolean);
-  }
-  return String(tags)
-    .split(",")
-    .map(t => t.trim())
-    .filter(Boolean);
-}
+    <!-- Non-blocking success message -->
+    <div id="saveMessage" class="hidden" role="status" aria-live="polite">✅ Entry saved!</div>
 
-export function normaliseScale(scale) {
-  if (!scale || typeof scale !== "object") return null;
-  const min = scale.min ?? null;
-  const max = scale.max ?? null;
-  const step = scale.step ?? null;
-  const anySet = [min, max, step].some(v => v !== null && v !== "" && v !== undefined);
-  if (!anySet) return null;
-  return {
-    min: min === "" ? null : (min !== null ? Number(min) : null),
-    max: max === "" ? null : (max !== null ? Number(max) : null),
-    step: step === "" ? null : (step !== null ? Number(step) : null),
-  };
-}
+    <!--
+      NOTE TO SELF:
+      Question modal:
+      - Used for question management without leaving the page
+      - track.js expects these exact IDs
+      - Keep entry comment OUTSIDE this modal (it belongs to the daily entry)
+    -->
+    <div
+      id="questionModal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="modalTitle">Manage Questions</h2>
+          <button id="closeQuestionModal" type="button" class="modal-close" aria-label="Close">✕</button>
+        </div>
 
-export function normaliseQuestion(q) {
-  const nq = { ...(q || {}) };
-  if (!nq.id) nq.id = createId("q");
-  nq.text = String(nq.text ?? "").trim();
-  nq.type = nq.type || "text";
+        <form id="modalQuestionForm" class="modal-form">
+          <label>
+            Question text
+            <input type="text" id="modalQuestionText" required />
+          </label>
 
-  if (nq.type === "select") {
-    nq.options = Array.isArray(nq.options)
-      ? nq.options.map(o => String(o).trim()).filter(Boolean)
-      : [];
-  } else {
-    if (Array.isArray(nq.options)) nq.options = nq.options.map(o => String(o).trim()).filter(Boolean);
-  }
+          <label>
+            Answer type
+            <select id="modalQuestionType" required>
+              <option value="boolean">Yes / No</option>
+              <option value="number">Number</option>
+              <option value="text">Short text</option>
+              <option value="date">Date</option>
+              <option value="select">Select (choose from options)</option>
+            </select>
+          </label>
 
-  nq.tags = normaliseTags(nq.tags);
-  nq.archived = Boolean(nq.archived);
-  nq.version = Number.isFinite(Number(nq.version)) ? Number(nq.version) : 1;
-  nq.scale = normaliseScale(nq.scale);
+          <label>
+            Tags (optional, comma-separated)
+            <input type="text" id="modalQuestionTags" placeholder="e.g. Morning, Diet" />
+          </label>
 
-  if (nq.units !== undefined && nq.units !== null) nq.units = String(nq.units);
+          <!-- Shown only for "select" type -->
+          <div id="modalOptionsContainer" style="display:none;">
+            <label>
+              Options (comma-separated)
+              <input type="text" id="modalQuestionOptions" placeholder="e.g. Gluten, Dairy, Sugar" />
+            </label>
+          </div>
 
-  return nq;
-}
+          <!-- Shown only for "number" type -->
+          <div id="modalScaleContainer" style="display:none;">
+            <label>
+              Number scale (optional)
+              <div class="scale-grid">
+                <input type="number" id="modalQuestionMin" placeholder="min" />
+                <input type="number" id="modalQuestionMax" placeholder="max" />
+                <input type="number" id="modalQuestionStep" placeholder="step" step="0.1" />
+              </div>
+            </label>
+          </div>
 
-export function saveQuestions(questions) {
-  localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
-}
+          <div class="row-actions">
+            <button type="submit" class="primary">Save</button>
+            <button type="button" id="modalCancelEdit" class="secondary hidden">Cancel edit</button>
+          </div>
+        </form>
 
-export function loadQuestions() {
-  const raw = safeJSONParse(localStorage.getItem(STORAGE_KEYS.QUESTIONS) || "[]", []);
-  const norm = raw.map(normaliseQuestion);
-  localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(norm));
-  return norm;
-}
+        <h3 class="modal-subtitle">Active questions</h3>
+        <ul id="modalQuestionList" class="modal-list"></ul>
 
-export function normaliseEntry(e) {
-  const ne = { ...(e || {}) };
-  if (!ne.id) ne.id = createId("e");
-  ne.date = ne.date || todayISODate();
-  ne.responses = (ne.responses && typeof ne.responses === "object") ? ne.responses : {};
-  ne.createdAt = ne.createdAt || nowISO();
-  ne.updatedAt = ne.updatedAt || nowISO();
-  ne.meta = (ne.meta && typeof ne.meta === "object") ? ne.meta : {};
-  return ne;
-}
+        <p class="help-text">
+          Tip: If you change a question’s meaning (like the pain scale range), bump version so history stays interpretable.
+        </p>
+      </div>
+    </div>
+  </main>
 
-export function saveEntries(entries) {
-  localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(entries));
-}
+  <!-- Bottom navigation -->
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button type="button" data-href="index.html" data-page="index">Setup</button>
+    <button type="button" data-href="track.html" data-page="track">Track</button>
+    <button type="button" data-href="view.html" data-page="view">View</button>
+  </nav>
 
-export function loadEntries() {
-  const raw = safeJSONParse(localStorage.getItem(STORAGE_KEYS.ENTRIES) || "[]", []);
-  const norm = raw.map(normaliseEntry);
-  localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(norm));
-  return norm;
-}
+  <footer style="text-align:center; margin-top:3rem; font-size:0.85rem; color:#888;">
+    © <span id="year"></span> The Idiom Lab
+  </footer>
 
-export function needsVersionBump(oldQ, newQ) {
-  if (!oldQ) return false;
+  <!--
+    NOTE TO SELF:
+    Tiny shared page glue:
+    - Footer year
+    - Bottom-nav routing + active highlight
+    - Back to setup button
+  -->
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
 
-  if ((oldQ.type || "text") !== (newQ.type || "text")) return true;
+    const currentPage = window.location.pathname.split("/").pop().split(".")[0];
+    document.querySelectorAll(".bottom-nav button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const href = btn.dataset.href;
+        if (href) window.location.href = href;
+      });
+      if (btn.dataset.page === currentPage) btn.classList.add("active");
+    });
 
-  const oldType = oldQ.type || "text";
-  if (oldType === "select") {
-    const a = (Array.isArray(oldQ.options) ? oldQ.options : []).join("||");
-    const b = (Array.isArray(newQ.options) ? newQ.options : []).join("||");
-    if (a !== b) return true;
-  }
+    document.getElementById("backToSetupBtn")?.addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+  </script>
 
-  if (oldType === "number") {
-    const aS = normaliseScale(oldQ.scale);
-    const bS = normaliseScale(newQ.scale);
-    const a = aS ? `${aS.min}|${aS.max}|${aS.step}` : "null";
-    const b = bS ? `${bS.min}|${bS.max}|${bS.step}` : "null";
-    if (a !== b) return true;
-  }
-
-  return false;
-}
-
-export function formatQuestionLabel(q, { includeArchivedTag = true } = {}) {
-  let label = q.text || "(untitled)";
-  if (includeArchivedTag && q.archived) label += " (archived)";
-  return label;
-}
-
-export function isFilledValue(v) {
-  if (v === null || v === undefined) return false;
-  if (Array.isArray(v)) return v.length > 0;
-  if (typeof v === "string") return v.trim() !== "";
-  return true;
-}
+  <!-- Page logic -->
+  <script type="module" src="js/track.js"></script>
+</body>
+</html>
