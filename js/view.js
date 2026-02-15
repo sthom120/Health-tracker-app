@@ -1,211 +1,132 @@
-// js/view.js
+// js/exportImport.js
 import {
-  loadQuestions,
   loadEntries,
+  loadQuestions,
   saveEntries,
-  parseLocalDate,
+  saveQuestions,
+  normaliseEntry,
+  normaliseQuestion,
+  nowISO,
   formatQuestionLabel,
-  isFilledValue,
 } from "./storage.js";
 
-import { initCompareChart } from "./charts.js";
-import { initExportImport } from "./exportImport.js";
+function downloadFile(filename, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
 
-function initViewPage() {
-  const table = document.getElementById("dataTable");
-  if (!table) return; // not on view page
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
 
-  const timeframeSelect = document.getElementById("timeframeSelect");
-  const summaryContainer = document.getElementById("summaryCards");
-
-  let questions = loadQuestions();
-  let entries = loadEntries();
-
-  function getQuestionsForView() {
-    questions = loadQuestions();
-    entries = loadEntries();
-
-    const active = questions.filter(q => !q.archived);
-    const archived = questions.filter(q => q.archived);
-
-    const archivedWithData = archived.filter(q =>
-      entries.some(e => e.responses && e.responses[q.id] !== undefined)
-    );
-
-    return [...active, ...archivedWithData];
-  }
-
-  function filterEntriesByTimeframe(days) {
-    if (days === "all") return [...entries];
-
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - Number(days));
-
-    return entries.filter(e => {
-      const d = parseLocalDate(e.date) || new Date(e.date);
-      return d >= cutoff;
-    });
-  }
-
-  function getFilteredEntries() {
-    entries = loadEntries();
-
-    const selected = timeframeSelect ? timeframeSelect.value : "all";
-    const filtered = filterEntriesByTimeframe(selected);
-
-    return filtered.sort((a, b) => {
-      const da = parseLocalDate(a.date) || new Date(a.date);
-      const db = parseLocalDate(b.date) || new Date(b.date);
-      return da - db;
-    });
-  }
-
-  function renderTable() {
-    questions = loadQuestions();
-    entries = loadEntries();
-
-    const qs = getQuestionsForView();
-    const allEntries = getFilteredEntries();
-
-    table.innerHTML = "";
-
-    const header = document.createElement("tr");
-    const headers = ["Date", ...qs.map(q => formatQuestionLabel(q)), "Actions"];
-    headers.forEach(t => {
-      const th = document.createElement("th");
-      th.textContent = t;
-      header.appendChild(th);
-    });
-    table.appendChild(header);
-
-    if (!allEntries.length) {
-      const row = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = headers.length;
-      td.innerHTML = "<em>No entries in this timeframe.</em>";
-      row.appendChild(td);
-      table.appendChild(row);
-      return;
-    }
-
-    allEntries.forEach(entry => {
-      const row = document.createElement("tr");
-
-      const dateCell = document.createElement("td");
-      dateCell.textContent = entry.date;
-      row.appendChild(dateCell);
-
-      qs.forEach(q => {
-        const cell = document.createElement("td");
-        const val = entry.responses ? entry.responses[q.id] : "";
-        if (val === null) cell.textContent = "";
-        else if (Array.isArray(val)) cell.textContent = val.join(", ");
-        else cell.textContent = val ?? "";
-        row.appendChild(cell);
-      });
-
-      const actionsCell = document.createElement("td");
-
-      const editBtn = document.createElement("button");
-      editBtn.textContent = "Edit";
-      editBtn.classList.add("small-edit");
-      editBtn.addEventListener("click", () => {
-        sessionStorage.setItem("editEntryId", entry.id);
-        window.location.href = "track.html?edit=1";
-      });
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "Delete";
-      deleteBtn.classList.add("danger", "small-delete");
-      deleteBtn.addEventListener("click", () => {
-        if (!confirm("Delete this entry?")) return;
-        entries = entries.filter(e => e.id !== entry.id);
-        saveEntries(entries);
-        renderTable();
-        renderSummary();
-      });
-
-      actionsCell.appendChild(editBtn);
-      actionsCell.appendChild(deleteBtn);
-      row.appendChild(actionsCell);
-
-      table.appendChild(row);
-    });
-  }
-
-  function entriesInLast(days) {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - days);
-    return entries.filter(e => {
-      const d = parseLocalDate(e.date) || new Date(e.date);
-      return d >= cutoff;
-    });
-  }
-
-  function completionRate(list, qs) {
-    if (!list.length || !qs.length) return 0;
-    const totalSlots = list.length * qs.length;
-    let filled = 0;
-
-    list.forEach(entry => {
-      qs.forEach(q => {
-        const v = entry.responses ? entry.responses[q.id] : undefined;
-        if (isFilledValue(v)) filled++;
-      });
-    });
-
-    return Math.round((filled / totalSlots) * 100);
-  }
-
-  function renderSummary() {
-    if (!summaryContainer) return;
-
-    questions = loadQuestions();
-    entries = loadEntries();
-
-    const qs = getQuestionsForView();
-    const week = entriesInLast(7);
-    const month = entriesInLast(30);
-
-    summaryContainer.innerHTML = `
-      <div class="summary-card">
-        <h3>Last 7 Days</h3>
-        <p>Entries logged: <strong>${week.length}</strong></p>
-        <p>Average completion: <strong>${completionRate(week, qs)}%</strong></p>
-      </div>
-
-      <div class="summary-card">
-        <h3>Last 30 Days</h3>
-        <p>Entries logged: <strong>${month.length}</strong></p>
-        <p>Average completion: <strong>${completionRate(month, qs)}%</strong></p>
-      </div>
-    `;
-  }
-
-  timeframeSelect?.addEventListener("change", () => {
-    renderTable();
-    renderSummary();
-  });
-
-  // Hook up chart + export/import
-  initCompareChart({
-    getFilteredEntries,
-    getQuestionsForView,
-  });
-
-  initExportImport({
-    getQuestionsForView,
-    refresh: () => {
-      // after import
-      questions = loadQuestions();
-      entries = loadEntries();
-      renderTable();
-      renderSummary();
-    },
-  });
-
-  renderTable();
-  renderSummary();
+  URL.revokeObjectURL(url);
 }
 
-initViewPage();
+export function initExportImport({ getQuestionsForView, refresh }) {
+  const exportJSONBtn = document.getElementById("exportJSON");
+  const exportCSVBtn = document.getElementById("exportCSV");
+  const importJSONInput = document.getElementById("importJSON");
+
+  // Export backup JSON (questions + entries, including comment)
+  exportJSONBtn?.addEventListener("click", () => {
+    const entries = loadEntries();
+    const questions = loadQuestions();
+
+    if (!entries.length) return alert("No entries to export.");
+
+    const backup = {
+      exportVersion: 3, // bumped because entries may include comment now
+      exportedAt: nowISO(),
+      questions,
+      entries,
+    };
+
+    downloadFile(
+      "tracker-backup.json",
+      JSON.stringify(backup, null, 2),
+      "application/json"
+    );
+  });
+
+  // Export CSV (flat + clinician-friendly)
+  exportCSVBtn?.addEventListener("click", () => {
+    const entries = loadEntries();
+    if (!entries.length) return alert("No entries to export.");
+
+    const qs = getQuestionsForView();
+
+    // NOTE TO SELF:
+    // Put Comment just before end or after responses — it’s narrative context.
+    const headers = ["Date", ...qs.map(q => formatQuestionLabel(q)), "Comment"];
+
+    const rows = entries.map(entry => {
+      const responses = qs.map(q => {
+        const val = entry.responses ? entry.responses[q.id] : "";
+        if (val === null) return "";
+        return Array.isArray(val) ? val.join(", ") : (val ?? "");
+      });
+
+      const comment = entry.comment ? String(entry.comment) : "";
+      return [entry.date, ...responses, comment];
+    });
+
+    // CSV escaping: wrap in quotes, double internal quotes
+    const csv = [headers, ...rows]
+      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    downloadFile("tracker-data.csv", csv, "text/csv");
+  });
+
+  // Import JSON (entries list OR backup object)
+  importJSONInput?.addEventListener("change", async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+
+    try {
+      const imported = JSON.parse(text);
+
+      let importedEntries = null;
+      let importedQuestions = null;
+
+      if (Array.isArray(imported)) {
+        // raw entries array
+        importedEntries = imported;
+      } else if (imported && typeof imported === "object") {
+        // backup object
+        if (Array.isArray(imported.entries)) importedEntries = imported.entries;
+        if (Array.isArray(imported.questions)) importedQuestions = imported.questions;
+      }
+
+      if (!Array.isArray(importedEntries)) {
+        alert("Invalid file format. Expected an entries list or a backup object.");
+        return;
+      }
+
+      // Merge questions if provided (incoming wins by id)
+      if (Array.isArray(importedQuestions)) {
+        const currentQs = loadQuestions();
+        const incoming = importedQuestions.map(normaliseQuestion);
+
+        const merged = new Map();
+        currentQs.forEach(q => merged.set(q.id, q));
+        incoming.forEach(q => merged.set(q.id, q));
+
+        saveQuestions(Array.from(merged.values()));
+      }
+
+      // Normalise entries (this is where comment becomes safe across versions)
+      saveEntries(importedEntries.map(normaliseEntry));
+
+      refresh?.();
+      alert("Import successful!");
+    } catch (err) {
+      console.error(err);
+      alert("Could not read JSON file.");
+    } finally {
+      event.target.value = "";
+    }
+  });
+}

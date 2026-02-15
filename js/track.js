@@ -1,4 +1,15 @@
 // js/track.js
+// ------------------------------------------------------------
+// Track page logic (track.html)
+//
+// Responsibilities:
+// - Render the daily form based on active questions
+// - Save/update one entry per date
+// - Support edit mode (from view page)
+// - Optional: manage questions inside a modal while logging
+// - NEW: store an optional free-text comment per entry
+// ------------------------------------------------------------
+
 import {
   loadQuestions,
   saveQuestions,
@@ -18,12 +29,16 @@ function initTrackPage() {
   const form = document.getElementById("dailyForm");
   if (!form) return; // not on track page
 
+  // Main controls
   const saveBtn = document.getElementById("saveEntry");
   const goView = document.getElementById("goView");
   const dateField = document.getElementById("entryDate");
   const msg = document.getElementById("saveMessage");
 
-  // Optional modal elements (only if you added them to track.html)
+  // NEW: optional comment field (must exist in track.html outside the modal)
+  const commentEl = document.getElementById("entryComment");
+
+  // Optional modal elements
   const addQuestionBtn = document.getElementById("addQuestionBtn");
   const manageQuestionsBtn = document.getElementById("manageQuestionsBtn");
   const questionModal = document.getElementById("questionModal");
@@ -46,11 +61,12 @@ function initTrackPage() {
   let questions = loadQuestions();
   let entries = loadEntries();
 
+  // Edit mode (set by view.js)
   const params = new URLSearchParams(window.location.search);
   const isEditing = params.has("edit");
   const editEntryId = sessionStorage.getItem("editEntryId") || null;
-  let entryToEdit = null;
 
+  let entryToEdit = null;
   if (isEditing && editEntryId) {
     entryToEdit = entries.find(e => e.id === editEntryId) || null;
   }
@@ -62,6 +78,7 @@ function initTrackPage() {
 
   function setDefaultDate() {
     if (!dateField) return;
+
     if (entryToEdit) {
       dateField.value = entryToEdit.date;
       if (saveBtn) saveBtn.textContent = "Update Entry";
@@ -70,6 +87,8 @@ function initTrackPage() {
     }
   }
 
+  // NOTE TO SELF:
+  // This is where adding new answer types (like "time") becomes easy.
   function buildInputForQuestion(q) {
     let input;
 
@@ -83,22 +102,27 @@ function initTrackPage() {
         `;
         break;
       }
+
       case "number": {
         input = document.createElement("input");
         input.type = "number";
 
+        // Use question-defined scale if present; otherwise allow a reasonable default.
         const s = normaliseScale(q.scale) || null;
-        input.min = (s && Number.isFinite(s.min)) ? String(s.min) : "0";
-        input.max = (s && Number.isFinite(s.max)) ? String(s.max) : "10";
+        if (s && Number.isFinite(s.min)) input.min = String(s.min);
+        if (s && Number.isFinite(s.max)) input.max = String(s.max);
         if (s && Number.isFinite(s.step)) input.step = String(s.step);
         break;
       }
+
       case "date": {
         input = document.createElement("input");
         input.type = "date";
         break;
       }
+
       case "select": {
+        // Multi-select rendered as a checkbox group
         input = document.createElement("div");
         input.classList.add("multi-select-group");
 
@@ -117,12 +141,14 @@ function initTrackPage() {
         });
         break;
       }
+
       default: {
         input = document.createElement("input");
         input.type = "text";
       }
     }
 
+    // For non-checkbox group inputs, give the input a "name" so form.elements[q.id] works.
     if (q.type !== "select") input.name = q.id;
     return input;
   }
@@ -131,6 +157,7 @@ function initTrackPage() {
     const qs = activeQuestions();
     form.innerHTML = "";
 
+    // Render question cards
     qs.forEach(q => {
       const card = document.createElement("div");
       card.classList.add("entry-card");
@@ -147,7 +174,7 @@ function initTrackPage() {
 
     setDefaultDate();
 
-    // Prefill edit mode
+    // Prefill edit mode (responses)
     if (entryToEdit?.responses) {
       qs.forEach(q => {
         const value = entryToEdit.responses[q.id];
@@ -161,7 +188,9 @@ function initTrackPage() {
         } else if (q.type === "select") {
           const selected = Array.isArray(value) ? value : [];
           selected.forEach(v => {
-            const box = form.querySelector(`input[name="${q.id}"][value="${CSS.escape(v)}"]`);
+            const box = form.querySelector(
+              `input[name="${q.id}"][value="${CSS.escape(v)}"]`
+            );
             if (box) box.checked = true;
           });
         } else {
@@ -170,16 +199,25 @@ function initTrackPage() {
         }
       });
     }
+
+    // NEW: Prefill comment in edit mode
+    if (commentEl) {
+      commentEl.value = entryToEdit?.comment || "";
+    }
   }
 
   renderDailyForm();
 
+  /* ----------------------------------------------------------
+     Save entry (create new or update existing)
+  ---------------------------------------------------------- */
   saveBtn?.addEventListener("click", () => {
     questions = loadQuestions();
     entries = loadEntries();
 
     const qs = questions.filter(q => !q.archived);
-    const entryDate = (dateField && dateField.value) ? dateField.value : todayISODate();
+
+    const entryDate = dateField?.value ? dateField.value : todayISODate();
     if (!entryDate) return alert("Please select a date.");
 
     const data = {
@@ -187,6 +225,9 @@ function initTrackPage() {
       responses: {},
       meta: {},
       updatedAt: nowISO(),
+
+      // NEW: store optional comment at top level (easy to export & display)
+      comment: commentEl ? commentEl.value.trim() : "",
     };
 
     qs.forEach(q => {
@@ -198,19 +239,34 @@ function initTrackPage() {
         else if (raw === "false") val = false;
         else val = null;
       } else if (q.type === "select") {
-        val = Array.from(form.querySelectorAll(`input[name="${q.id}"]:checked`)).map(cb => cb.value);
+        val = Array.from(
+          form.querySelectorAll(`input[name="${q.id}"]:checked`)
+        ).map(cb => cb.value);
       } else {
         val = form.elements[q.id]?.value ?? "";
       }
 
       data.responses[q.id] = val;
+
+      // NOTE TO SELF:
+      // Store the question version so you know what “meaning” this value had at the time.
       data.meta[q.id] = { versionAtTime: q.version || 1 };
     });
 
+    // --- Edit existing entry flow ---
     if (entryToEdit) {
       const idx = entries.findIndex(e => e.id === entryToEdit.id);
-      if (idx !== -1) entries[idx] = { ...normaliseEntry(entries[idx]), ...data, id: entryToEdit.id };
-      else entries.push(normaliseEntry({ ...data, id: createId("e") }));
+
+      if (idx !== -1) {
+        entries[idx] = {
+          ...normaliseEntry(entries[idx]),
+          ...data,
+          id: entryToEdit.id,
+        };
+      } else {
+        // If for some reason we can't find it, fallback to creating a new one
+        entries.push(normaliseEntry({ ...data, id: createId("e") }));
+      }
 
       saveEntries(entries);
       sessionStorage.removeItem("editEntryId");
@@ -218,19 +274,33 @@ function initTrackPage() {
       return;
     }
 
-    // One entry per date overwrite prompt
+    // --- One entry per date: overwrite prompt ---
     const existing = entries.find(e => e.date === entryDate);
     if (existing) {
       if (!confirm("An entry already exists for this date. Overwrite it?")) return;
+
       const idx = entries.findIndex(e => e.id === existing.id);
-      entries[idx] = { ...normaliseEntry(existing), ...data, id: existing.id };
+      entries[idx] = {
+        ...normaliseEntry(existing),
+        ...data,
+        id: existing.id,
+      };
     } else {
-      entries.push(normaliseEntry({ ...data, id: createId("e"), createdAt: nowISO() }));
+      entries.push(
+        normaliseEntry({
+          ...data,
+          id: createId("e"),
+          createdAt: nowISO(),
+        })
+      );
     }
 
     saveEntries(entries);
+
+    // Reset UI after saving (not in edit mode)
     form.reset();
     if (dateField) dateField.value = todayISODate();
+    if (commentEl) commentEl.value = "";
     renderDailyForm();
 
     if (msg) {
@@ -243,16 +313,22 @@ function initTrackPage() {
 
   goView?.addEventListener("click", () => (window.location.href = "view.html"));
 
-  /* -------------------------------
+  /* ----------------------------------------------------------
      Optional question modal
-     ------------------------------- */
+     NOTE TO SELF:
+     If you ever want to support un-archiving here, add a second list.
+  ---------------------------------------------------------- */
   if (!questionModal || !modalForm) return;
 
   let modalEditingId = null;
 
   function modalSetTypeUI(type) {
-    if (modalOptionsContainer) modalOptionsContainer.style.display = (type === "select") ? "block" : "none";
-    if (modalScaleContainer) modalScaleContainer.style.display = (type === "number") ? "block" : "none";
+    if (modalOptionsContainer) {
+      modalOptionsContainer.style.display = type === "select" ? "block" : "none";
+    }
+    if (modalScaleContainer) {
+      modalScaleContainer.style.display = type === "number" ? "block" : "none";
+    }
   }
 
   function openModal() {
@@ -310,9 +386,9 @@ function initTrackPage() {
         if (modalOptions) modalOptions.value = Array.isArray(q.options) ? q.options.join(", ") : "";
 
         const s = normaliseScale(q.scale) || {};
-        if (modalMin) modalMin.value = (s.min ?? "") === null ? "" : String(s.min ?? "");
-        if (modalMax) modalMax.value = (s.max ?? "") === null ? "" : String(s.max ?? "");
-        if (modalStep) modalStep.value = (s.step ?? "") === null ? "" : String(s.step ?? "");
+        if (modalMin) modalMin.value = s.min ?? "";
+        if (modalMax) modalMax.value = s.max ?? "";
+        if (modalStep) modalStep.value = s.step ?? "";
 
         modalSetTypeUI(q.type);
       });
@@ -321,14 +397,15 @@ function initTrackPage() {
         if (!confirm("Archive this question? It will stop appearing in the daily form, but past data remains.")) return;
         const idx = questions.findIndex(x => x.id === q.id);
         if (idx === -1) return;
+
         questions[idx].archived = true;
         saveQuestions(questions);
+
         renderDailyForm();
         renderModalQuestionList();
       });
 
-      actions.appendChild(editBtn);
-      actions.appendChild(archiveBtn);
+      actions.append(editBtn, archiveBtn);
       li.appendChild(actions);
 
       modalQuestionList.appendChild(li);
@@ -339,7 +416,7 @@ function initTrackPage() {
 
   modalCancelEdit?.addEventListener("click", () => {
     modalEditingId = null;
-    modalCancelEdit.classList.add("hidden");
+    modalCancelEdit?.classList.add("hidden");
     modalForm.reset();
     modalSetTypeUI(modalType?.value || "boolean");
   });
@@ -353,31 +430,36 @@ function initTrackPage() {
     if (!text) return;
 
     const tags = normaliseTags(modalTags?.value || "");
+
     const optsRaw = String(modalOptions?.value || "").trim();
-    const options = (type === "select" && optsRaw)
-      ? optsRaw.split(",").map(o => o.trim()).filter(Boolean)
-      : [];
+    const options =
+      type === "select" && optsRaw
+        ? optsRaw.split(",").map(o => o.trim()).filter(Boolean)
+        : [];
 
-    const scale = (type === "number")
-      ? normaliseScale({
-          min: modalMin ? modalMin.value : null,
-          max: modalMax ? modalMax.value : null,
-          step: modalStep ? modalStep.value : null,
-        })
-      : null;
+    const scale =
+      type === "number"
+        ? normaliseScale({
+            min: modalMin?.value ?? null,
+            max: modalMax?.value ?? null,
+            step: modalStep?.value ?? null,
+          })
+        : null;
 
+    // Update existing question
     if (modalEditingId) {
       const idx = questions.findIndex(q => q.id === modalEditingId);
       if (idx === -1) return;
 
       const oldQ = questions[idx];
+
       const updated = normaliseQuestion({
         ...oldQ,
         text,
         type,
         tags,
-        options: (type === "select") ? options : (oldQ.options || []),
-        scale: (type === "number") ? scale : null,
+        options: type === "select" ? options : (oldQ.options || []),
+        scale: type === "number" ? scale : null,
       });
 
       if (needsVersionBump(oldQ, updated)) {
@@ -397,15 +479,18 @@ function initTrackPage() {
       return;
     }
 
-    questions.push(normaliseQuestion({
-      text,
-      type,
-      tags,
-      options: (type === "select") ? options : [],
-      scale: (type === "number") ? scale : null,
-      archived: false,
-      version: 1,
-    }));
+    // Add new question
+    questions.push(
+      normaliseQuestion({
+        text,
+        type,
+        tags,
+        options: type === "select" ? options : [],
+        scale: type === "number" ? scale : null,
+        archived: false,
+        version: 1,
+      })
+    );
 
     saveQuestions(questions);
     modalForm.reset();
@@ -418,10 +503,12 @@ function initTrackPage() {
   manageQuestionsBtn?.addEventListener("click", openModal);
   closeQuestionModal?.addEventListener("click", closeModal);
 
+  // Click outside modal to close
   questionModal.addEventListener("click", e => {
     if (e.target === questionModal) closeModal();
   });
 
+  // Escape key closes modal
   document.addEventListener("keydown", e => {
     if (e.key === "Escape" && !questionModal.classList.contains("hidden")) closeModal();
   });
